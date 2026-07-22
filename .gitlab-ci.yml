@@ -1,4 +1,4 @@
-image: node:20
+image: node:22
 
 pages:
   stage: deploy
@@ -12,7 +12,6 @@ pages:
     - npm install -g pnpm
   script:
     - pnpm install
-    - pnpm approve-builds esbuild
     - pnpm build
     - mv dist public
   artifacts:
