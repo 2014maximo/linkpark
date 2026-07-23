@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import type { Link, Category } from '../types';
 import {
 	getAllLinks,
@@ -19,7 +19,8 @@ import { LinkCard } from './LinkCard';
 import { AddLinkModal } from './AddLinkModal';
 import { CategoryManager } from './CategoryManager';
 import { BackgroundPicker } from './BackgroundPicker';
-import { Search, Upload, Download, Plus, FolderPlus, Image, Trash2 } from 'lucide-react';
+import { DroppableCategory } from './DroppableCategory';
+import { Search, Upload, Download, Plus, FolderPlus, Image, Settings, Trash2 } from 'lucide-react';
 import { DndContext, closestCenter } from '@dnd-kit/core';
 import type { DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy, arrayMove } from '@dnd-kit/sortable';
@@ -31,8 +32,10 @@ export function LinkManager() {
 	const [isModalOpen, setIsModalOpen] = useState(false);
 	const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
 	const [isBackgroundModalOpen, setIsBackgroundModalOpen] = useState(false);
+	const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 	const [editingLink, setEditingLink] = useState<Link | null>(null);
 	const [selectedCategory, setSelectedCategory] = useState<string>('all');
+	const fileInputRef = useRef<HTMLInputElement>(null);
 
 	useEffect(() => {
 		loadData();
@@ -144,17 +147,34 @@ export function LinkManager() {
 		URL.revokeObjectURL(url);
 	}
 
-	async function handleDragEndLinks(event: DragEndEvent, categoryId: string) {
+	async function handleDragEnd(event: DragEndEvent) {
 		const { active, over } = event;
 		if (!over || active.id === over.id) return;
 
-		const categoryLinks = links.filter(l => l.categoryId === categoryId);
-		const oldIndex = categoryLinks.findIndex(l => l.id === active.id);
-		const newIndex = categoryLinks.findIndex(l => l.id === over.id);
-		const newCategoryLinks = arrayMove(categoryLinks, oldIndex, newIndex);
+		const draggedLink = links.find(l => l.id === active.id);
+		if (!draggedLink) return;
 
-		await reorderLinks(newCategoryLinks);
-		await loadData();
+		const targetCategory = categories.find(c => c.id === over.id);
+		const overLink = links.find(l => l.id === over.id);
+
+		if (targetCategory) {
+			if (draggedLink.categoryId !== targetCategory.id) {
+				await updateLink({ ...draggedLink, categoryId: targetCategory.id });
+				await loadData();
+			}
+		} else if (overLink) {
+			if (draggedLink.categoryId !== overLink.categoryId) {
+				await updateLink({ ...draggedLink, categoryId: overLink.categoryId });
+				await loadData();
+			} else {
+				const categoryLinks = links.filter(l => l.categoryId === draggedLink.categoryId);
+				const oldIndex = categoryLinks.findIndex(l => l.id === active.id);
+				const newIndex = categoryLinks.findIndex(l => l.id === over.id);
+				const newCategoryLinks = arrayMove(categoryLinks, oldIndex, newIndex);
+				await reorderLinks(newCategoryLinks);
+				await loadData();
+			}
+		}
 	}
 
 	async function handleDragEndCategories(event: DragEndEvent) {
@@ -171,53 +191,64 @@ export function LinkManager() {
 
 	return (
 		<div className="space-y-6">
-			<div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+			<div className="flex items-center gap-4 flex-wrap">
 				<h1 className="text-5xl font-bold shrink-0 title-shadow">LINKPARK</h1>
-				<div className="relative flex-1 max-w-md">
-					<Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
-					<input
-						type="text"
-						placeholder="Buscar links..."
-						value={searchTerm}
-						onChange={e => setSearchTerm(e.target.value)}
-						className="input-field pl-10 w-full"
-					/>
-				</div>
-				<select
-					value={selectedCategory}
-					onChange={e => setSelectedCategory(e.target.value)}
-					className="input-field w-full md:w-64"
+				<button
+					onClick={() => setIsSettingsOpen(!isSettingsOpen)}
+					className="p-2 text-gray-400 hover:text-gray-100 transition-colors"
+					title="Configuración"
 				>
-					<option value="all">Todas las categorías</option>
-					{categories.map(cat => (
-						<option key={cat.id} value={cat.id}>
-							{cat.name}
-						</option>
-					))}
-				</select>
-				<div className="flex gap-2 flex-wrap shrink-0">
-					<button onClick={() => setIsBackgroundModalOpen(true)} className="btn-secondary">
-						<Image size={18} />
-						<span>Fondo</span>
-					</button>
-					<label className="btn-secondary cursor-pointer">
-						<Upload size={18} />
-						<span>Importar</span>
-						<input type="file" accept=".txt" onChange={handleImport} className="hidden" />
-					</label>
-					<button onClick={handleExport} className="btn-secondary">
-						<Download size={18} />
-						<span>Exportar</span>
-					</button>
-					<button onClick={() => setIsCategoryModalOpen(true)} className="btn-secondary">
-						<FolderPlus size={18} />
-						<span>Categorías</span>
-					</button>
-					<button onClick={() => { setEditingLink(null); setIsModalOpen(true); }} className="btn-primary">
-						<Plus size={18} />
-						<span>Agregar Link</span>
-					</button>
-				</div>
+					<Settings size={24} />
+				</button>
+				{isSettingsOpen && (
+					<>
+						<div className="relative flex-1 max-w-md">
+							<Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+							<input
+								type="text"
+								placeholder="Buscar links..."
+								value={searchTerm}
+								onChange={e => setSearchTerm(e.target.value)}
+								className="input-field pl-10 w-full"
+							/>
+						</div>
+						<select
+							value={selectedCategory}
+							onChange={e => setSelectedCategory(e.target.value)}
+							className="input-field w-full md:w-64"
+						>
+							<option value="all">Todas las categorías</option>
+							{categories.map(cat => (
+								<option key={cat.id} value={cat.id}>
+									{cat.name}
+								</option>
+							))}
+						</select>
+						<div className="flex gap-2 flex-wrap shrink-0">
+							<button onClick={() => setIsBackgroundModalOpen(true)} className="btn-secondary">
+								<Image size={18} />
+								<span>Fondo</span>
+							</button>
+							<label className="btn-secondary cursor-pointer">
+								<Upload size={18} />
+								<span>Importar</span>
+								<input type="file" accept=".txt" onChange={handleImport} className="hidden" />
+							</label>
+							<button onClick={handleExport} className="btn-secondary">
+								<Download size={18} />
+								<span>Exportar</span>
+							</button>
+							<button onClick={() => setIsCategoryModalOpen(true)} className="btn-secondary">
+								<FolderPlus size={18} />
+								<span>Categorías</span>
+							</button>
+							<button onClick={() => { setEditingLink(null); setIsModalOpen(true); }} className="btn-primary">
+								<Plus size={18} />
+								<span>Agregar Link</span>
+							</button>
+						</div>
+					</>
+				)}
 			</div>
 
 			{categories.length === 0 && (
@@ -227,34 +258,34 @@ export function LinkManager() {
 				</div>
 			)}
 
-			<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-				{linksByCategory
-					.filter(({ category }) => selectedCategory === 'all' || category.id === selectedCategory)
-					.map(({ category, links: categoryLinks }) => (
-					<div key={category.id} className="glass-container rounded-lg p-4 group/container relative">
-						<div className="flex items-center justify-between mb-4">
-							<h2 className="text-xl font-semibold text-gray-100 title-shadow">{category.name}</h2>
-							<div className="flex gap-1 opacity-0 group-hover/container:opacity-100 transition-opacity">
-								<button
-									onClick={() => { setEditingLink(null); setSelectedCategory(category.id); setIsModalOpen(true); }}
-									className="p-1 text-blue-400 hover:text-blue-300 transition-colors"
-									title="Agregar link"
-								>
-									<Plus size={14} />
-								</button>
-								<button
-									onClick={() => handleDeleteCategory(category.id)}
-									className="p-1 text-red-400 hover:text-red-300 transition-colors"
-									title="Eliminar categoría"
-								>
-									<Trash2 size={14} />
-								</button>
+			<DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+				<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+					{linksByCategory
+						.filter(({ category }) => selectedCategory === 'all' || category.id === selectedCategory)
+						.map(({ category, links: categoryLinks }) => (
+						<DroppableCategory key={category.id} id={category.id} className="glass-container rounded-lg p-4 group/container relative">
+							<div className="flex items-center justify-between mb-4">
+								<h2 className="text-xl font-semibold text-gray-100 title-shadow">{category.name}</h2>
+								<div className="flex gap-1 opacity-0 group-hover/container:opacity-100 transition-opacity">
+									<button
+										onClick={() => { setEditingLink(null); setSelectedCategory(category.id); setIsModalOpen(true); }}
+										className="p-1.5 text-blue-400 hover:text-blue-300 transition-colors"
+										title="Agregar link"
+									>
+										<Plus size={18} />
+									</button>
+									<button
+										onClick={() => handleDeleteCategory(category.id)}
+										className="p-1.5 text-red-400 hover:text-red-300 transition-colors"
+										title="Eliminar categoría"
+									>
+										<Trash2 size={18} />
+									</button>
+								</div>
 							</div>
-						</div>
-						{categoryLinks.length === 0 ? (
-							<p className="text-gray-400 text-sm">No hay links en esta categoría</p>
-						) : (
-							<DndContext collisionDetection={closestCenter} onDragEnd={e => handleDragEndLinks(e, category.id)}>
+							{categoryLinks.length === 0 ? (
+								<p className="text-gray-400 text-sm">No hay links en esta categoría</p>
+							) : (
 								<SortableContext items={categoryLinks.map(l => l.id)} strategy={verticalListSortingStrategy}>
 									<div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
 										{categoryLinks.map(link => (
@@ -265,11 +296,11 @@ export function LinkManager() {
 										))}
 									</div>
 								</SortableContext>
-							</DndContext>
-						)}
-					</div>
-				))}
-			</div>
+							)}
+						</DroppableCategory>
+					))}
+				</div>
+			</DndContext>
 
 			{isModalOpen && (
 				<AddLinkModal

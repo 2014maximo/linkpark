@@ -45,7 +45,7 @@ export function LinkCard({ link }: LinkCardProps) {
 						{link.name.charAt(0).toUpperCase()}
 					</div>
 				)}
-				<span className="text-sm text-center truncate w-full text-gray-100">{link.name}</span>
+				<span className="text-sm text-center truncate w-full text-gray-100 text-shadow">{link.name}</span>
 			</a>
 		</div>
 	);

@@ -1,5 +1,6 @@
 ---
 import '../styles/global.css';
+import { AuthorBadge } from '../components/AuthorBadge';
 
 interface Props {
 	title: string;
@@ -26,5 +27,6 @@ const { title } = Astro.props;
 		<div class="container mx-auto px-4 py-8">
 			<slot />
 		</div>
+		<AuthorBadge client:load />
 	</body>
 </html>

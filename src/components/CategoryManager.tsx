@@ -46,7 +46,7 @@ export function CategoryManager({ categories, onClose, onAdd, onUpdate, onDelete
 		<div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={onClose}>
 			<div className="glass-container rounded-lg p-6 w-full max-w-md" onClick={e => e.stopPropagation()}>
 				<div className="flex justify-between items-center mb-4">
-					<h2 className="text-xl font-semibold">Gestionar Categorías</h2>
+					<h2 className="text-xl font-semibold title-shadow">Gestionar Categorías</h2>
 					<button onClick={onClose} className="text-gray-400 hover:text-gray-100">
 						<X size={24} />
 					</button>
@@ -83,12 +83,16 @@ export function CategoryManager({ categories, onClose, onAdd, onUpdate, onDelete
 										<button
 											onClick={() => handleUpdate(category.id)}
 											disabled={isSubmitting}
-											className="p-1 bg-green-600 hover:bg-green-700 rounded"
+											className="p-1 text-green-400 hover:text-green-300 transition-colors"
 										>
-											Guardar
+											<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+												<path d="M20 6 9 17l-5-5"/>
+											</svg>
 										</button>
-										<button onClick={() => setEditingId(null)} className="p-1 bg-gray-600 hover:bg-gray-500 rounded">
-											Cancelar
+										<button onClick={() => setEditingId(null)} className="p-1 text-gray-400 hover:text-gray-300 transition-colors">
+											<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+												<path d="M18 6 6 18M6 6l12 12"/>
+											</svg>
 										</button>
 									</>
 								) : (
@@ -99,13 +103,13 @@ export function CategoryManager({ categories, onClose, onAdd, onUpdate, onDelete
 												setEditingId(category.id);
 												setEditingName(category.name);
 											}}
-											className="p-1 bg-blue-600 hover:bg-blue-700 rounded"
+											className="p-1 text-blue-400 hover:text-blue-300 transition-colors"
 										>
 											<Edit2 size={14} />
 										</button>
 										<button
 											onClick={() => onDelete(category.id)}
-											className="p-1 bg-red-600 hover:bg-red-700 rounded"
+											className="p-1 text-red-400 hover:text-red-300 transition-colors"
 										>
 											<Trash2 size={14} />
 										</button>

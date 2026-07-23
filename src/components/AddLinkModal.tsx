@@ -44,7 +44,7 @@ export function AddLinkModal({ categories, link, defaultCategoryId, onClose, onS
 		<div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={onClose}>
 			<div className="glass-container rounded-lg p-6 w-full max-w-md" onClick={e => e.stopPropagation()}>
 				<div className="flex justify-between items-center mb-4">
-					<h2 className="text-xl font-semibold">{link ? 'Editar Link' : 'Agregar Link'}</h2>
+					<h2 className="text-xl font-semibold title-shadow">{link ? 'Editar Link' : 'Agregar Link'}</h2>
 					<button onClick={onClose} className="text-gray-400 hover:text-gray-100">
 						<X size={24} />
 					</button>
