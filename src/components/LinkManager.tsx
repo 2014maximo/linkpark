@@ -19,11 +19,11 @@ import { LinkCard } from './LinkCard';
 import { AddLinkModal } from './AddLinkModal';
 import { CategoryManager } from './CategoryManager';
 import { BackgroundPicker } from './BackgroundPicker';
-import { DroppableCategory } from './DroppableCategory';
+import { SortableCategoryContainer } from './SortableCategoryContainer';
 import { Search, Upload, Download, Plus, FolderPlus, Image, Settings, Trash2 } from 'lucide-react';
 import { DndContext, closestCenter } from '@dnd-kit/core';
 import type { DragEndEvent } from '@dnd-kit/core';
-import { SortableContext, verticalListSortingStrategy, arrayMove } from '@dnd-kit/sortable';
+import { SortableContext, rectSortingStrategy, arrayMove } from '@dnd-kit/sortable';
 
 export function LinkManager() {
 	const [links, setLinks] = useState<Link[]>([]);
@@ -152,6 +152,20 @@ export function LinkManager() {
 		if (!over || active.id === over.id) return;
 
 		const draggedLink = links.find(l => l.id === active.id);
+		const draggedCategory = categories.find(c => c.id === active.id);
+
+		if (draggedCategory) {
+			const overCategory = categories.find(c => c.id === over.id);
+			if (overCategory) {
+				const oldIndex = categories.findIndex(c => c.id === draggedCategory.id);
+				const newIndex = categories.findIndex(c => c.id === overCategory.id);
+				const newCategories = arrayMove(categories, oldIndex, newIndex);
+				await reorderCategories(newCategories);
+				await loadData();
+			}
+			return;
+		}
+
 		if (!draggedLink) return;
 
 		const targetCategory = categories.find(c => c.id === over.id);
@@ -259,47 +273,30 @@ export function LinkManager() {
 			)}
 
 			<DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-				<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-					{linksByCategory
-						.filter(({ category }) => selectedCategory === 'all' || category.id === selectedCategory)
-						.map(({ category, links: categoryLinks }) => (
-						<DroppableCategory key={category.id} id={category.id} className="glass-container rounded-lg p-4 group/container relative">
-							<div className="flex items-center justify-between mb-4">
-								<h2 className="text-xl font-semibold text-gray-100 title-shadow">{category.name}</h2>
-								<div className="flex gap-1 opacity-0 group-hover/container:opacity-100 transition-opacity">
-									<button
-										onClick={() => { setEditingLink(null); setSelectedCategory(category.id); setIsModalOpen(true); }}
-										className="p-1.5 text-blue-400 hover:text-blue-300 transition-colors"
-										title="Agregar link"
-									>
-										<Plus size={18} />
-									</button>
-									<button
-										onClick={() => handleDeleteCategory(category.id)}
-										className="p-1.5 text-red-400 hover:text-red-300 transition-colors"
-										title="Eliminar categoría"
-									>
-										<Trash2 size={18} />
-									</button>
-								</div>
-							</div>
-							{categoryLinks.length === 0 ? (
-								<p className="text-gray-400 text-sm">No hay links en esta categoría</p>
-							) : (
-								<SortableContext items={categoryLinks.map(l => l.id)} strategy={verticalListSortingStrategy}>
-									<div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-										{categoryLinks.map(link => (
-											<LinkCard
-												key={link.id}
-												link={link}
-											/>
-										))}
-									</div>
-								</SortableContext>
-							)}
-						</DroppableCategory>
-					))}
-				</div>
+				<SortableContext items={categories.filter(c => selectedCategory === 'all' || c.id === selectedCategory).map(c => c.id)} strategy={rectSortingStrategy}>
+					<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+						{linksByCategory
+							.filter(({ category }) => selectedCategory === 'all' || category.id === selectedCategory)
+							.map(({ category, links: categoryLinks }) => (
+							<SortableCategoryContainer key={category.id} id={category.id} name={category.name} onAddLink={() => { setEditingLink(null); setSelectedCategory(category.id); setIsModalOpen(true); }} onDeleteCategory={() => handleDeleteCategory(category.id)}>
+								{categoryLinks.length === 0 ? (
+									<p className="text-gray-400 text-sm">No hay links en esta categoría</p>
+								) : (
+									<SortableContext items={categoryLinks.map(l => l.id)} strategy={rectSortingStrategy}>
+										<div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+											{categoryLinks.map(link => (
+												<LinkCard
+													key={link.id}
+													link={link}
+												/>
+											))}
+										</div>
+									</SortableContext>
+								)}
+							</SortableCategoryContainer>
+						))}
+					</div>
+				</SortableContext>
 			</DndContext>
 
 			{isModalOpen && (
