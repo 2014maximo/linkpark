@@ -2,14 +2,14 @@ import { openDB, type IDBPDatabase } from 'idb';
 import type { Link, Category } from '../types';
 
 const DB_NAME = 'links-manager-db';
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 
 let dbPromise: Promise<IDBPDatabase> | null = null;
 
 function getDB() {
 	if (!dbPromise) {
 		dbPromise = openDB(DB_NAME, DB_VERSION, {
-			upgrade(db) {
+			upgrade(db, oldVersion) {
 				if (!db.objectStoreNames.contains('links')) {
 					const linkStore = db.createObjectStore('links', { keyPath: 'id' });
 					linkStore.createIndex('categoryId', 'categoryId');
@@ -18,6 +18,11 @@ function getDB() {
 				if (!db.objectStoreNames.contains('categories')) {
 					const categoryStore = db.createObjectStore('categories', { keyPath: 'id' });
 					categoryStore.createIndex('order', 'order');
+				}
+				if (oldVersion < 2) {
+					if (!db.objectStoreNames.contains('settings')) {
+						db.createObjectStore('settings', { keyPath: 'key' });
+					}
 				}
 			},
 		});
@@ -145,4 +150,20 @@ export function getFaviconUrl(url: string): string {
 	} catch {
 		return '';
 	}
+}
+
+export async function getBackgroundImage(): Promise<string | null> {
+	const db = await getDB();
+	const result = await db.get('settings', 'backgroundImage');
+	return result?.value ?? null;
+}
+
+export async function setBackgroundImage(dataUrl: string): Promise<void> {
+	const db = await getDB();
+	await db.put('settings', { key: 'backgroundImage', value: dataUrl });
+}
+
+export async function clearBackgroundImage(): Promise<void> {
+	const db = await getDB();
+	await db.delete('settings', 'backgroundImage');
 }

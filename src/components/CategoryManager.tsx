@@ -44,7 +44,7 @@ export function CategoryManager({ categories, onClose, onAdd, onUpdate, onDelete
 
 	return (
 		<div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={onClose}>
-			<div className="bg-gray-800 rounded-lg p-6 w-full max-w-md" onClick={e => e.stopPropagation()}>
+			<div className="glass-container rounded-lg p-6 w-full max-w-md" onClick={e => e.stopPropagation()}>
 				<div className="flex justify-between items-center mb-4">
 					<h2 className="text-xl font-semibold">Gestionar Categorías</h2>
 					<button onClick={onClose} className="text-gray-400 hover:text-gray-100">
@@ -70,7 +70,7 @@ export function CategoryManager({ categories, onClose, onAdd, onUpdate, onDelete
 						<p className="text-gray-400 text-center py-4">No hay categorías</p>
 					) : (
 						categories.map(category => (
-							<div key={category.id} className="flex items-center gap-2 bg-gray-700 rounded p-2">
+							<div key={category.id} className="flex items-center gap-2 glass-container rounded p-2">
 								{editingId === category.id ? (
 									<>
 										<input

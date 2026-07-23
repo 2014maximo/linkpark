@@ -16,8 +16,13 @@ const { title } = Astro.props;
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 		<meta name="generator" content={Astro.generator} />
 		<title>{title}</title>
+		<link rel="preconnect" href="https://fonts.googleapis.com" />
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+		<link href="https://fonts.googleapis.com/css2?family=Six+Caps&display=swap" rel="stylesheet" />
+		<link href="https://fonts.googleapis.com/css?family=Open+Sans+Condensed:300,300i,700&display=swap" rel="stylesheet" />
 	</head>
-	<body class="bg-gray-900 text-gray-100 min-h-screen">
+	<body class="min-h-screen" style="background-color: #1d1d1d;">
+		<div id="bg-layer" class="fixed inset-0 -z-10 bg-cover bg-center bg-no-repeat"></div>
 		<div class="container mx-auto px-4 py-8">
 			<slot />
 		</div>

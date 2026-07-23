@@ -5,11 +5,12 @@ import { X } from 'lucide-react';
 interface AddLinkModalProps {
 	categories: Category[];
 	link: Link | null;
+	defaultCategoryId?: string;
 	onClose: () => void;
 	onSave: (url: string, name: string, categoryId: string) => Promise<void>;
 }
 
-export function AddLinkModal({ categories, link, onClose, onSave }: AddLinkModalProps) {
+export function AddLinkModal({ categories, link, defaultCategoryId, onClose, onSave }: AddLinkModalProps) {
 	const [url, setUrl] = useState('');
 	const [name, setName] = useState('');
 	const [categoryId, setCategoryId] = useState('');
@@ -20,10 +21,12 @@ export function AddLinkModal({ categories, link, onClose, onSave }: AddLinkModal
 			setUrl(link.url);
 			setName(link.name);
 			setCategoryId(link.categoryId);
+		} else if (defaultCategoryId) {
+			setCategoryId(defaultCategoryId);
 		} else if (categories.length > 0) {
 			setCategoryId(categories[0].id);
 		}
-	}, [link, categories]);
+	}, [link, categories, defaultCategoryId]);
 
 	async function handleSubmit(e: React.FormEvent) {
 		e.preventDefault();
@@ -39,7 +42,7 @@ export function AddLinkModal({ categories, link, onClose, onSave }: AddLinkModal
 
 	return (
 		<div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={onClose}>
-			<div className="bg-gray-800 rounded-lg p-6 w-full max-w-md" onClick={e => e.stopPropagation()}>
+			<div className="glass-container rounded-lg p-6 w-full max-w-md" onClick={e => e.stopPropagation()}>
 				<div className="flex justify-between items-center mb-4">
 					<h2 className="text-xl font-semibold">{link ? 'Editar Link' : 'Agregar Link'}</h2>
 					<button onClick={onClose} className="text-gray-400 hover:text-gray-100">

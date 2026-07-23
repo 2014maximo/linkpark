@@ -1,16 +1,13 @@
 import type { Link } from '../types';
 import { getFaviconUrl } from '../lib/db';
-import { Edit2, Trash2, GripVertical } from 'lucide-react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 
 interface LinkCardProps {
 	link: Link;
-	onEdit: () => void;
-	onDelete: () => void;
 }
 
-export function LinkCard({ link, onEdit, onDelete }: LinkCardProps) {
+export function LinkCard({ link }: LinkCardProps) {
 	const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
 		id: link.id,
 	});
@@ -27,33 +24,29 @@ export function LinkCard({ link, onEdit, onDelete }: LinkCardProps) {
 		<div
 			ref={setNodeRef}
 			style={style}
-			className="group relative bg-gray-700 hover:bg-gray-600 rounded-lg p-3 transition-colors"
+			className="group relative flex flex-col items-center gap-2 p-3"
 		>
 			<div {...attributes} {...listeners} className="absolute top-1 left-1 cursor-grab opacity-0 group-hover:opacity-100 transition-opacity">
-				<GripVertical size={14} className="text-gray-400" />
+				<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-gray-400">
+					<circle cx="9" cy="5" r="1"/>
+					<circle cx="9" cy="12" r="1"/>
+					<circle cx="9" cy="19" r="1"/>
+					<circle cx="15" cy="5" r="1"/>
+					<circle cx="15" cy="12" r="1"/>
+					<circle cx="15" cy="19" r="1"/>
+				</svg>
 			</div>
 
-			<div className="flex flex-col items-center gap-2">
-				<a href={link.url} target="_blank" rel="noopener noreferrer" className="flex flex-col items-center gap-2 w-full">
-					{faviconUrl ? (
-						<img src={faviconUrl} alt="" className="w-8 h-8 rounded" onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
-					) : (
-						<div className="w-8 h-8 bg-gray-600 rounded flex items-center justify-center text-xs">
-							{link.name.charAt(0).toUpperCase()}
-						</div>
-					)}
-					<span className="text-sm text-center truncate w-full text-gray-100">{link.name}</span>
-				</a>
-			</div>
-
-			<div className="absolute top-1 right-1 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-				<button onClick={onEdit} className="p-1 bg-blue-600 hover:bg-blue-700 rounded transition-colors" title="Editar">
-					<Edit2 size={12} />
-				</button>
-				<button onClick={onDelete} className="p-1 bg-red-600 hover:bg-red-700 rounded transition-colors" title="Eliminar">
-					<Trash2 size={12} />
-				</button>
-			</div>
+			<a href={link.url} target="_blank" rel="noopener noreferrer" className="flex flex-col items-center gap-2 w-full">
+				{faviconUrl ? (
+					<img src={faviconUrl} alt="" className="w-8 h-8 rounded" onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+				) : (
+					<div className="w-8 h-8 bg-gray-600 rounded flex items-center justify-center text-xs">
+						{link.name.charAt(0).toUpperCase()}
+					</div>
+				)}
+				<span className="text-sm text-center truncate w-full text-gray-100">{link.name}</span>
+			</a>
 		</div>
 	);
 }

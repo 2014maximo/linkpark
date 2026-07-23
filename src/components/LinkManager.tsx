@@ -13,11 +13,13 @@ import {
 	reorderCategories,
 	parseLinksFile,
 	exportLinksToText,
+	getBackgroundImage,
 } from '../lib/db';
 import { LinkCard } from './LinkCard';
 import { AddLinkModal } from './AddLinkModal';
 import { CategoryManager } from './CategoryManager';
-import { Search, Upload, Download, Plus, FolderPlus } from 'lucide-react';
+import { BackgroundPicker } from './BackgroundPicker';
+import { Search, Upload, Download, Plus, FolderPlus, Image, Trash2 } from 'lucide-react';
 import { DndContext, closestCenter } from '@dnd-kit/core';
 import type { DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy, arrayMove } from '@dnd-kit/sortable';
@@ -28,11 +30,16 @@ export function LinkManager() {
 	const [searchTerm, setSearchTerm] = useState('');
 	const [isModalOpen, setIsModalOpen] = useState(false);
 	const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
+	const [isBackgroundModalOpen, setIsBackgroundModalOpen] = useState(false);
 	const [editingLink, setEditingLink] = useState<Link | null>(null);
 	const [selectedCategory, setSelectedCategory] = useState<string>('all');
 
 	useEffect(() => {
 		loadData();
+		getBackgroundImage().then(bg => {
+			const bgLayer = document.getElementById('bg-layer');
+			if (bgLayer && bg) bgLayer.style.backgroundImage = `url(${bg})`;
+		});
 	}, []);
 
 	async function loadData() {
@@ -165,8 +172,34 @@ export function LinkManager() {
 	return (
 		<div className="space-y-6">
 			<div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-				<h1 className="text-3xl font-bold">Mis Links</h1>
-				<div className="flex gap-2 flex-wrap">
+				<h1 className="text-5xl font-bold shrink-0 title-shadow">LINKPARK</h1>
+				<div className="relative flex-1 max-w-md">
+					<Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+					<input
+						type="text"
+						placeholder="Buscar links..."
+						value={searchTerm}
+						onChange={e => setSearchTerm(e.target.value)}
+						className="input-field pl-10 w-full"
+					/>
+				</div>
+				<select
+					value={selectedCategory}
+					onChange={e => setSelectedCategory(e.target.value)}
+					className="input-field w-full md:w-64"
+				>
+					<option value="all">Todas las categorías</option>
+					{categories.map(cat => (
+						<option key={cat.id} value={cat.id}>
+							{cat.name}
+						</option>
+					))}
+				</select>
+				<div className="flex gap-2 flex-wrap shrink-0">
+					<button onClick={() => setIsBackgroundModalOpen(true)} className="btn-secondary">
+						<Image size={18} />
+						<span>Fondo</span>
+					</button>
 					<label className="btn-secondary cursor-pointer">
 						<Upload size={18} />
 						<span>Importar</span>
@@ -187,31 +220,6 @@ export function LinkManager() {
 				</div>
 			</div>
 
-			<div className="flex flex-col gap-4 md:flex-row">
-				<div className="relative flex-1">
-					<Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
-					<input
-						type="text"
-						placeholder="Buscar links..."
-						value={searchTerm}
-						onChange={e => setSearchTerm(e.target.value)}
-						className="input-field pl-10 w-full"
-					/>
-				</div>
-				<select
-					value={selectedCategory}
-					onChange={e => setSelectedCategory(e.target.value)}
-					className="input-field md:w-64"
-				>
-					<option value="all">Todas las categorías</option>
-					{categories.map(cat => (
-						<option key={cat.id} value={cat.id}>
-							{cat.name}
-						</option>
-					))}
-				</select>
-			</div>
-
 			{categories.length === 0 && (
 				<div className="text-center py-12 text-gray-400">
 					<p className="text-lg">No hay categorías creadas</p>
@@ -219,37 +227,55 @@ export function LinkManager() {
 				</div>
 			)}
 
-			{linksByCategory.map(({ category, links: categoryLinks }) => (
-				<div key={category.id} className="bg-gray-800 rounded-lg p-4">
-					<h2 className="text-xl font-semibold mb-4 text-gray-100">{category.name}</h2>
-					{categoryLinks.length === 0 ? (
-						<p className="text-gray-400 text-sm">No hay links en esta categoría</p>
-					) : (
-						<DndContext collisionDetection={closestCenter} onDragEnd={e => handleDragEndLinks(e, category.id)}>
-							<SortableContext items={categoryLinks.map(l => l.id)} strategy={verticalListSortingStrategy}>
-								<div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
-									{categoryLinks.map(link => (
-										<LinkCard
-											key={link.id}
-											link={link}
-											onEdit={() => {
-												setEditingLink(link);
-												setIsModalOpen(true);
-											}}
-											onDelete={() => handleDeleteLink(link.id)}
-										/>
-									))}
-								</div>
-							</SortableContext>
-						</DndContext>
-					)}
-				</div>
-			))}
+			<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+				{linksByCategory
+					.filter(({ category }) => selectedCategory === 'all' || category.id === selectedCategory)
+					.map(({ category, links: categoryLinks }) => (
+					<div key={category.id} className="glass-container rounded-lg p-4 group/container relative">
+						<div className="flex items-center justify-between mb-4">
+							<h2 className="text-xl font-semibold text-gray-100 title-shadow">{category.name}</h2>
+							<div className="flex gap-1 opacity-0 group-hover/container:opacity-100 transition-opacity">
+								<button
+									onClick={() => { setEditingLink(null); setSelectedCategory(category.id); setIsModalOpen(true); }}
+									className="p-1 text-blue-400 hover:text-blue-300 transition-colors"
+									title="Agregar link"
+								>
+									<Plus size={14} />
+								</button>
+								<button
+									onClick={() => handleDeleteCategory(category.id)}
+									className="p-1 text-red-400 hover:text-red-300 transition-colors"
+									title="Eliminar categoría"
+								>
+									<Trash2 size={14} />
+								</button>
+							</div>
+						</div>
+						{categoryLinks.length === 0 ? (
+							<p className="text-gray-400 text-sm">No hay links en esta categoría</p>
+						) : (
+							<DndContext collisionDetection={closestCenter} onDragEnd={e => handleDragEndLinks(e, category.id)}>
+								<SortableContext items={categoryLinks.map(l => l.id)} strategy={verticalListSortingStrategy}>
+									<div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+										{categoryLinks.map(link => (
+											<LinkCard
+												key={link.id}
+												link={link}
+											/>
+										))}
+									</div>
+								</SortableContext>
+							</DndContext>
+						)}
+					</div>
+				))}
+			</div>
 
 			{isModalOpen && (
 				<AddLinkModal
 					categories={categories}
 					link={editingLink}
+					defaultCategoryId={editingLink ? undefined : selectedCategory !== 'all' ? selectedCategory : undefined}
 					onClose={() => {
 						setIsModalOpen(false);
 						setEditingLink(null);
@@ -274,6 +300,10 @@ export function LinkManager() {
 					onUpdate={handleUpdateCategory}
 					onDelete={handleDeleteCategory}
 				/>
+			)}
+
+			{isBackgroundModalOpen && (
+				<BackgroundPicker onClose={() => setIsBackgroundModalOpen(false)} />
 			)}
 		</div>
 	);

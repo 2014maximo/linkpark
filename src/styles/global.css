@@ -1,15 +1,63 @@
 @import "tailwindcss";
 
+@theme {
+	--font-heading: 'Six Caps', sans-serif;
+	--font-body: 'Open Sans Condensed', sans-serif;
+}
+
+body {
+	font-family: var(--font-body);
+	color: #f3f4f6;
+}
+
+h1, h2, h3, h4, h5, h6 {
+	font-family: var(--font-heading);
+}
+
 @layer components {
 	.btn-primary {
-		@apply bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors font-medium;
+		@apply px-4 py-2 rounded-lg flex items-center gap-2 transition-colors font-medium;
+		color: #f3f4f6;
+		text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+	}
+
+	.btn-primary svg {
+		filter: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.8));
+	}
+
+	.btn-primary:hover {
+		background-color: rgba(37, 99, 235, 0.2);
 	}
 
 	.btn-secondary {
-		@apply bg-gray-700 hover:bg-gray-600 text-gray-100 px-4 py-2 rounded-lg flex items-center gap-2 transition-colors font-medium;
+		@apply px-4 py-2 rounded-lg flex items-center gap-2 transition-colors font-medium;
+		color: #f3f4f6;
+		text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+	}
+
+	.btn-secondary svg {
+		filter: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.8));
+	}
+
+	.btn-secondary:hover {
+		background-color: rgba(75, 85, 99, 0.2);
 	}
 
 	.input-field {
-		@apply bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent;
+		@apply border border-white/10 rounded-lg px-3 py-2 text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent;
+		background-color: rgba(255, 255, 255, 0.05);
+		backdrop-filter: blur(10px);
+		-webkit-backdrop-filter: blur(10px);
+	}
+
+	.glass-container {
+		background-color: rgba(255, 255, 255, 0.05);
+		backdrop-filter: blur(10px);
+		-webkit-backdrop-filter: blur(10px);
+		border: 1px solid rgba(255, 255, 255, 0.1);
+	}
+
+	.title-shadow {
+		text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.9), 0 0 10px rgba(0, 0, 0, 0.5);
 	}
 }
