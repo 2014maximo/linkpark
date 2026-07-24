@@ -16,11 +16,11 @@ import {
 	getBackgroundImage,
 } from '../lib/db';
 import { LinkCard } from './LinkCard';
-import { AddLinkModal } from './AddLinkModal';
 import { CategoryManager } from './CategoryManager';
+import { LinksManager } from './LinksManager';
 import { BackgroundPicker } from './BackgroundPicker';
 import { SortableCategoryContainer } from './SortableCategoryContainer';
-import { Search, Upload, Download, Plus, FolderPlus, Image, Settings, Trash2 } from 'lucide-react';
+import { Search, Upload, Download, FolderPlus, Image, Settings, Trash2 } from 'lucide-react';
 import { DndContext, closestCenter } from '@dnd-kit/core';
 import type { DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, rectSortingStrategy, arrayMove } from '@dnd-kit/sortable';
@@ -31,9 +31,10 @@ export function LinkManager() {
 	const [searchTerm, setSearchTerm] = useState('');
 	const [isModalOpen, setIsModalOpen] = useState(false);
 	const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
+	const [isLinksManagerOpen, setIsLinksManagerOpen] = useState(false);
+	const [managingCategoryId, setManagingCategoryId] = useState<string | null>(null);
 	const [isBackgroundModalOpen, setIsBackgroundModalOpen] = useState(false);
 	const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-	const [editingLink, setEditingLink] = useState<Link | null>(null);
 	const [selectedCategory, setSelectedCategory] = useState<string>('all');
 	const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -238,7 +239,7 @@ export function LinkManager() {
 								</option>
 							))}
 						</select>
-						<div className="flex gap-2 flex-wrap shrink-0">
+						<div className="flex gap-2 flex-wrap w-full">
 							<button onClick={() => setIsBackgroundModalOpen(true)} className="btn-secondary">
 								<Image size={18} />
 								<span>Fondo</span>
@@ -255,10 +256,6 @@ export function LinkManager() {
 							<button onClick={() => setIsCategoryModalOpen(true)} className="btn-secondary">
 								<FolderPlus size={18} />
 								<span>Categorías</span>
-							</button>
-							<button onClick={() => { setEditingLink(null); setIsModalOpen(true); }} className="btn-primary">
-								<Plus size={18} />
-								<span>Agregar Link</span>
 							</button>
 						</div>
 					</>
@@ -278,12 +275,12 @@ export function LinkManager() {
 						{linksByCategory
 							.filter(({ category }) => selectedCategory === 'all' || category.id === selectedCategory)
 							.map(({ category, links: categoryLinks }) => (
-							<SortableCategoryContainer key={category.id} id={category.id} name={category.name} onAddLink={() => { setEditingLink(null); setSelectedCategory(category.id); setIsModalOpen(true); }} onDeleteCategory={() => handleDeleteCategory(category.id)}>
+							<SortableCategoryContainer key={category.id} id={category.id} name={category.name} onDeleteCategory={() => handleDeleteCategory(category.id)} onEditCategory={() => { setManagingCategoryId(category.id); setIsLinksManagerOpen(true); }}>
 								{categoryLinks.length === 0 ? (
 									<p className="text-gray-400 text-sm">No hay links en esta categoría</p>
 								) : (
 									<SortableContext items={categoryLinks.map(l => l.id)} strategy={rectSortingStrategy}>
-										<div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+										<div className="grid grid-cols-5 gap-3">
 											{categoryLinks.map(link => (
 												<LinkCard
 													key={link.id}
@@ -299,27 +296,6 @@ export function LinkManager() {
 				</SortableContext>
 			</DndContext>
 
-			{isModalOpen && (
-				<AddLinkModal
-					categories={categories}
-					link={editingLink}
-					defaultCategoryId={editingLink ? undefined : selectedCategory !== 'all' ? selectedCategory : undefined}
-					onClose={() => {
-						setIsModalOpen(false);
-						setEditingLink(null);
-					}}
-					onSave={async (url, name, categoryId) => {
-						if (editingLink) {
-							await handleUpdateLink(editingLink.id, url, name, categoryId);
-						} else {
-							await handleAddLink(url, name, categoryId);
-						}
-						setIsModalOpen(false);
-						setEditingLink(null);
-					}}
-				/>
-			)}
-
 			{isCategoryModalOpen && (
 				<CategoryManager
 					categories={categories}
@@ -327,6 +303,21 @@ export function LinkManager() {
 					onAdd={handleAddCategory}
 					onUpdate={handleUpdateCategory}
 					onDelete={handleDeleteCategory}
+				/>
+			)}
+
+			{isLinksManagerOpen && managingCategoryId && (
+				<LinksManager
+					links={links.filter(l => l.categoryId === managingCategoryId)}
+					category={categories.find(c => c.id === managingCategoryId)!}
+					onClose={() => { setIsLinksManagerOpen(false); setManagingCategoryId(null); }}
+					onAdd={async (url, name) => {
+						await handleAddLink(url, name, managingCategoryId);
+					}}
+					onUpdate={async (id, url, name) => {
+						await handleUpdateLink(id, url, name, managingCategoryId);
+					}}
+					onDelete={handleDeleteLink}
 				/>
 			)}
 

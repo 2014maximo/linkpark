@@ -7,17 +7,16 @@ interface SortableCategoryContainerProps {
 	id: string;
 	name: string;
 	children: React.ReactNode;
-	onAddLink: () => void;
 	onDeleteCategory: () => void;
+	onEditCategory: () => void;
 }
 
-export function SortableCategoryContainer({ id, name, children, onAddLink, onDeleteCategory }: SortableCategoryContainerProps) {
+export function SortableCategoryContainer({ id, name, children, onDeleteCategory, onEditCategory }: SortableCategoryContainerProps) {
 	const {
 		attributes,
 		listeners,
 		setNodeRef: setSortableNodeRef,
 		transform,
-		transition,
 		isDragging,
 	} = useSortable({
 		id,
@@ -29,8 +28,9 @@ export function SortableCategoryContainer({ id, name, children, onAddLink, onDel
 
 	const style = {
 		transform: CSS.Transform.toString(transform),
-		transition,
+		transition: 'transform linear',
 		opacity: isDragging ? 0.5 : 1,
+		backgroundColor: 'rgba(0, 0, 0, 0.5)',
 	};
 
 	const setRefs = (node: HTMLElement | null) => {
@@ -41,27 +41,23 @@ export function SortableCategoryContainer({ id, name, children, onAddLink, onDel
 	return (
 		<div
 			ref={setRefs}
-			className={`group/container relative rounded-lg p-4 transition-all ${
+			className={`group/container relative rounded-lg p-4 ${
 				isOver ? 'ring-2 ring-blue-500/50' : ''
 			}`}
-			style={{
-				...style,
-				backgroundColor: 'rgba(255, 255, 255, 0.02)',
-				backdropFilter: 'blur(8px)',
-			}}
+			style={style}
 		>
 			<div className="flex items-center justify-between mb-4">
 				<div className="flex items-center gap-2">
 					<div {...attributes} {...listeners} className="cursor-grab opacity-0 group-hover/container:opacity-100 transition-opacity">
 						<GripVertical size={18} className="text-gray-400" />
 					</div>
-					<h2 className="text-xl font-semibold text-gray-100 title-shadow">{name}</h2>
+					<h2 className="text-[26px] font-semibold text-gray-100 title-shadow">{name}</h2>
 				</div>
 				<div className="flex gap-1 opacity-0 group-hover/container:opacity-100 transition-opacity">
 					<button
-						onClick={onAddLink}
-						className="p-1.5 text-blue-400 hover:text-blue-300 transition-colors"
-						title="Agregar link"
+						onClick={onEditCategory}
+						className="p-1.5 text-yellow-400 hover:text-yellow-300 transition-colors"
+						title="Gestionar links"
 					>
 						<Plus size={18} />
 					</button>
