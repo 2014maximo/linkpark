@@ -63,7 +63,7 @@ export function BackgroundPicker({ onClose }: BackgroundPickerProps) {
 
 	return (
 		<div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={handleCancel}>
-			<div className="glass-container rounded-lg p-6 w-full max-w-md" onClick={e => e.stopPropagation()}>
+			<div className="rounded-lg p-6 w-full max-w-md" style={{ backgroundColor: 'rgba(0, 0, 0, 0.7)' }} onClick={e => e.stopPropagation()}>
 				<div className="flex justify-between items-center mb-4">
 					<h2 className="text-xl font-semibold flex items-center gap-2">
 						<Image size={22} />

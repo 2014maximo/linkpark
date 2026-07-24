@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import type { Link } from '../types';
 import { getFaviconUrl } from '../lib/db';
 import { useSortable } from '@dnd-kit/sortable';
@@ -8,6 +9,8 @@ interface LinkCardProps {
 }
 
 export function LinkCard({ link }: LinkCardProps) {
+	const [faviconLoaded, setFaviconLoaded] = useState(false);
+	const [faviconError, setFaviconError] = useState(false);
 	const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
 		id: link.id,
 	});
@@ -38,13 +41,25 @@ export function LinkCard({ link }: LinkCardProps) {
 			</div>
 
 			<a href={link.url} target="_blank" rel="noopener noreferrer" className="flex flex-col items-center gap-2 w-full">
-				{faviconUrl ? (
-					<img src={faviconUrl} alt="" className="w-8 h-8 rounded" onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
-				) : (
-					<div className="w-8 h-8 bg-gray-600 rounded flex items-center justify-center text-xs">
-						{link.name.charAt(0).toUpperCase()}
-					</div>
-				)}
+				<div className="w-8 h-8 relative">
+					{!faviconLoaded && (
+						<div className="w-8 h-8 bg-gray-600 rounded flex items-center justify-center absolute inset-0">
+							<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-white">
+								<path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+								<path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+							</svg>
+						</div>
+					)}
+					{faviconUrl && !faviconError && (
+						<img
+							src={faviconUrl}
+							alt=""
+							className="w-8 h-8 rounded absolute inset-0"
+							onLoad={() => setFaviconLoaded(true)}
+							onError={() => setFaviconError(true)}
+						/>
+					)}
+				</div>
 				<span className="text-sm text-center truncate w-full text-gray-100 text-shadow">{link.name}</span>
 			</a>
 		</div>
