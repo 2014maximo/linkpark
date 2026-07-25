@@ -64,13 +64,13 @@ export function LinksManager({ links, category, onClose, onAdd, onUpdate, onDele
 					</button>
 				</div>
 
-				<form onSubmit={handleAdd} className="flex gap-2 mb-4">
+				<form onSubmit={handleAdd} className="flex flex-col sm:flex-row gap-2 mb-4">
 					<input
 						type="url"
 						value={newLinkUrl}
 						onChange={e => setNewLinkUrl(e.target.value)}
 						placeholder="URL"
-						className="input-field flex-1"
+						className="input-field flex-1 min-w-0"
 						required
 					/>
 					<input
@@ -78,7 +78,7 @@ export function LinksManager({ links, category, onClose, onAdd, onUpdate, onDele
 						value={newLinkName}
 						onChange={e => setNewLinkName(e.target.value)}
 						placeholder="Nombre"
-						className="input-field flex-1"
+						className="input-field flex-1 min-w-0"
 						required
 					/>
 					<button type="submit" disabled={isSubmitting} className="btn-primary disabled:opacity-50">
@@ -91,14 +91,14 @@ export function LinksManager({ links, category, onClose, onAdd, onUpdate, onDele
 						<p className="text-gray-400 text-center py-4">No hay links en esta categoría</p>
 					) : (
 						links.map(link => (
-							<div key={link.id} className="flex items-center gap-2 glass-container rounded p-2">
+							<div key={link.id} className="flex flex-col sm:flex-row sm:items-center gap-2 glass-container rounded p-2">
 								{editingId === link.id ? (
 									<>
 										<input
 											type="url"
 											value={editingUrl}
 											onChange={e => setEditingUrl(e.target.value)}
-											className="input-field flex-1"
+											className="input-field flex-1 min-w-0"
 											placeholder="URL"
 											autoFocus
 										/>
@@ -106,23 +106,25 @@ export function LinksManager({ links, category, onClose, onAdd, onUpdate, onDele
 											type="text"
 											value={editingName}
 											onChange={e => setEditingName(e.target.value)}
-											className="input-field flex-1"
+											className="input-field flex-1 min-w-0"
 											placeholder="Nombre"
 										/>
-										<button
-											onClick={() => handleUpdate(link.id)}
-											disabled={isSubmitting}
-											className="p-1 text-green-400 hover:text-green-300 transition-colors"
-										>
-											<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-												<path d="M20 6 9 17l-5-5"/>
-											</svg>
-										</button>
-										<button onClick={() => setEditingId(null)} className="p-1 text-gray-400 hover:text-gray-300 transition-colors">
-											<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-												<path d="M18 6 6 18M6 6l12 12"/>
-											</svg>
-										</button>
+										<div className="flex gap-1">
+											<button
+												onClick={() => handleUpdate(link.id)}
+												disabled={isSubmitting}
+												className="p-1 text-green-400 hover:text-green-300 transition-colors"
+											>
+												<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+													<path d="M20 6 9 17l-5-5"/>
+												</svg>
+											</button>
+											<button onClick={() => setEditingId(null)} className="p-1 text-gray-400 hover:text-gray-300 transition-colors">
+												<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+													<path d="M18 6 6 18M6 6l12 12"/>
+												</svg>
+											</button>
+										</div>
 									</>
 								) : (
 									<>
