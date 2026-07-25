@@ -6,9 +6,10 @@ import { CSS } from '@dnd-kit/utilities';
 
 interface LinkCardProps {
 	link: Link;
+	showControls?: boolean;
 }
 
-export function LinkCard({ link }: LinkCardProps) {
+export function LinkCard({ link, showControls = false }: LinkCardProps) {
 	const [faviconLoaded, setFaviconLoaded] = useState(false);
 	const [faviconError, setFaviconError] = useState(false);
 	const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
@@ -29,7 +30,7 @@ export function LinkCard({ link }: LinkCardProps) {
 			style={style}
 			className="group relative flex flex-col items-center gap-2 p-3"
 		>
-			<div {...attributes} {...listeners} className="absolute top-1 left-1 cursor-grab opacity-0 group-hover:opacity-100 transition-opacity">
+			<div {...attributes} {...listeners} className={`absolute top-1 left-1 cursor-grab transition-opacity ${showControls ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
 				<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-gray-400">
 					<circle cx="9" cy="5" r="1"/>
 					<circle cx="9" cy="12" r="1"/>

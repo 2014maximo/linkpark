@@ -100,8 +100,9 @@ export async function deleteCategory(id: string): Promise<void> {
 export async function reorderLinks(links: Link[]): Promise<void> {
 	const db = await getDB();
 	const tx = db.transaction('links', 'readwrite');
-	for (const link of links) {
-		await tx.store.put(link);
+	for (let i = 0; i < links.length; i++) {
+		links[i].order = i;
+		await tx.store.put(links[i]);
 	}
 	await tx.done;
 }
@@ -109,8 +110,9 @@ export async function reorderLinks(links: Link[]): Promise<void> {
 export async function reorderCategories(categories: Category[]): Promise<void> {
 	const db = await getDB();
 	const tx = db.transaction('categories', 'readwrite');
-	for (const category of categories) {
-		await tx.store.put(category);
+	for (let i = 0; i < categories.length; i++) {
+		categories[i].order = i;
+		await tx.store.put(categories[i]);
 	}
 	await tx.done;
 }
@@ -135,11 +137,21 @@ export function parseLinksFile(content: string): Array<{ url: string; name: stri
 }
 
 export function exportLinksToText(links: Link[], categories: Category[]): string {
-	const categoryMap = new Map(categories.map(c => [c.id, c.name]));
-	const lines = links.map(link => {
-		const categoryName = categoryMap.get(link.categoryId) || 'General';
-		return `${link.url} | ${link.name} | ${categoryName}`;
-	});
+	const sortedCategories = [...categories].sort((a, b) => a.order - b.order);
+	const lines: string[] = [];
+
+	for (const category of sortedCategories) {
+		const categoryLinks = links
+			.filter(link => link.categoryId === category.id)
+			.sort((a, b) => a.order - b.order);
+
+		if (categoryLinks.length === 0) continue;
+
+		for (const link of categoryLinks) {
+			lines.push(`${link.url} | ${link.name} | ${category.name}`);
+		}
+	}
+
 	return lines.join('\n');
 }
 
@@ -166,4 +178,28 @@ export async function setBackgroundImage(dataUrl: string): Promise<void> {
 export async function clearBackgroundImage(): Promise<void> {
 	const db = await getDB();
 	await db.delete('settings', 'backgroundImage');
+}
+
+export async function clearAllLinks(): Promise<void> {
+	const db = await getDB();
+	const tx = db.transaction('links', 'readwrite');
+	await tx.store.clear();
+	await tx.done;
+}
+
+export async function clearAllCategoriesAndLinks(): Promise<void> {
+	const db = await getDB();
+	const tx = db.transaction(['categories', 'links'], 'readwrite');
+	await tx.objectStore('categories').clear();
+	await tx.objectStore('links').clear();
+	await tx.done;
+}
+
+export async function clearAllData(): Promise<void> {
+	const db = await getDB();
+	const tx = db.transaction(['categories', 'links', 'settings'], 'readwrite');
+	await tx.objectStore('categories').clear();
+	await tx.objectStore('links').clear();
+	await tx.objectStore('settings').clear();
+	await tx.done;
 }

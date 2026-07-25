@@ -14,12 +14,18 @@ import {
 	parseLinksFile,
 	exportLinksToText,
 	getBackgroundImage,
+	clearBackgroundImage,
+	clearAllLinks,
+	clearAllCategoriesAndLinks,
+	clearAllData,
 } from '../lib/db';
+import { useIsMobile } from '../lib/useIsMobile';
 import { LinkCard } from './LinkCard';
 import { CategoryManager } from './CategoryManager';
 import { LinksManager } from './LinksManager';
 import { BackgroundPicker } from './BackgroundPicker';
 import { SortableCategoryContainer } from './SortableCategoryContainer';
+import { DuplicateModal } from './DuplicateModal';
 import { Search, Upload, Download, FolderPlus, Image, Settings, Trash2 } from 'lucide-react';
 import { DndContext, closestCenter } from '@dnd-kit/core';
 import type { DragEndEvent } from '@dnd-kit/core';
@@ -35,8 +41,19 @@ export function LinkManager() {
 	const [managingCategoryId, setManagingCategoryId] = useState<string | null>(null);
 	const [isBackgroundModalOpen, setIsBackgroundModalOpen] = useState(false);
 	const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+	const [isDeleteMenuOpen, setIsDeleteMenuOpen] = useState(false);
 	const [selectedCategory, setSelectedCategory] = useState<string>('all');
+	const [duplicateConflict, setDuplicateConflict] = useState<{
+		incomingName: string;
+		incomingUrl: string;
+		incomingCategory: string;
+		existingLink: Link;
+		existingCategoryName: string;
+		matchType: 'name' | 'url';
+		resolve: ((action: 'skip' | 'replace' | 'add') => void) | null;
+	} | null>(null);
 	const fileInputRef = useRef<HTMLInputElement>(null);
+	const isMobile = useIsMobile();
 
 	useEffect(() => {
 		loadData();
@@ -114,25 +131,109 @@ export function LinkManager() {
 		const content = await file.text();
 		const parsedLinks = parseLinksFile(content);
 
-		for (const linkData of parsedLinks) {
-			let category = categories.find(c => c.name === linkData.category);
-			if (!category) {
-				const maxOrder = categories.reduce((max, c) => Math.max(max, c.order), -1);
-				category = await addCategory(linkData.category, maxOrder + 1);
-			}
+		const categoryMap = new Map<string, Category>();
+		for (const cat of categories) {
+			categoryMap.set(cat.name.toLowerCase(), cat);
+		}
 
-			const maxLinkOrder = links
-				.filter(l => l.categoryId === category!.id)
-				.reduce((max, l) => Math.max(max, l.order), -1);
+		const currentLinks = [...links];
+		const currentCategories = [...categories];
 
-			await addLink({
-				url: linkData.url,
-				name: linkData.name,
-				categoryId: category.id,
-				order: maxLinkOrder + 1,
+		function askUser(
+			incomingName: string,
+			incomingUrl: string,
+			incomingCategory: string,
+			existingLink: Link,
+			existingCategoryName: string,
+			matchType: 'name' | 'url'
+		): Promise<'skip' | 'replace' | 'add'> {
+			return new Promise(resolve => {
+				setDuplicateConflict({
+					incomingName,
+					incomingUrl,
+					incomingCategory,
+					existingLink,
+					existingCategoryName,
+					matchType,
+					resolve,
+				});
 			});
 		}
 
+		for (const linkData of parsedLinks) {
+			const categoryKey = linkData.category.toLowerCase();
+			let category = categoryMap.get(categoryKey);
+
+			if (!category) {
+				const maxOrder = currentCategories.reduce((max, c) => Math.max(max, c.order), -1);
+				category = await addCategory(linkData.category, maxOrder + 1);
+				categoryMap.set(categoryKey, category);
+				currentCategories.push(category);
+			}
+
+			const exactDuplicate = currentLinks.find(
+				l => l.name.toLowerCase() === linkData.name.toLowerCase() && l.url.toLowerCase() === linkData.url.toLowerCase()
+			);
+			if (exactDuplicate) {
+				continue;
+			}
+
+			const nameConflict = currentLinks.find(l => l.name.toLowerCase() === linkData.name.toLowerCase());
+			const urlConflict = currentLinks.find(l => l.url.toLowerCase() === linkData.url.toLowerCase());
+			const conflict = nameConflict || urlConflict;
+
+			if (conflict) {
+				const matchType = nameConflict ? 'name' : 'url';
+				const conflictCategory = currentCategories.find(c => c.id === conflict.categoryId);
+				const action = await askUser(
+					linkData.name,
+					linkData.url,
+					linkData.category,
+					conflict,
+					conflictCategory?.name || 'General',
+					matchType
+				);
+
+				if (action === 'skip') {
+					continue;
+				} else if (action === 'replace') {
+					await updateLink({
+						...conflict,
+						url: linkData.url,
+						name: linkData.name,
+						categoryId: category.id,
+					});
+					const idx = currentLinks.findIndex(l => l.id === conflict.id);
+					if (idx !== -1) {
+						currentLinks[idx] = { ...conflict, url: linkData.url, name: linkData.name, categoryId: category.id };
+					}
+				} else {
+					const maxLinkOrder = currentLinks
+						.filter(l => l.categoryId === category!.id)
+						.reduce((max, l) => Math.max(max, l.order), -1);
+					const newLink = await addLink({
+						url: linkData.url,
+						name: linkData.name,
+						categoryId: category.id,
+						order: maxLinkOrder + 1,
+					});
+					currentLinks.push(newLink);
+				}
+			} else {
+				const maxLinkOrder = currentLinks
+					.filter(l => l.categoryId === category!.id)
+					.reduce((max, l) => Math.max(max, l.order), -1);
+				const newLink = await addLink({
+					url: linkData.url,
+					name: linkData.name,
+					categoryId: category.id,
+					order: maxLinkOrder + 1,
+				});
+				currentLinks.push(newLink);
+			}
+		}
+
+		setDuplicateConflict(null);
 		await loadData();
 		event.target.value = '';
 	}
@@ -146,6 +247,39 @@ export function LinkManager() {
 		a.download = 'links.txt';
 		a.click();
 		URL.revokeObjectURL(url);
+	}
+
+	async function handleClearAll() {
+		if (confirm('¿Estás seguro de borrar TODO? Se eliminarán todos los links, categorías y el fondo.')) {
+			await clearAllData();
+			const bgLayer = document.getElementById('bg-layer');
+			if (bgLayer) bgLayer.style.backgroundImage = '';
+			setIsDeleteMenuOpen(false);
+			await loadData();
+		}
+	}
+
+	async function handleClearLinksOnly() {
+		if (confirm('¿Estás seguro de borrar solo los links? Las categorías se mantendrán.')) {
+			await clearAllLinks();
+			setIsDeleteMenuOpen(false);
+			await loadData();
+		}
+	}
+
+	async function handleClearCategoriesWithLinks() {
+		if (confirm('¿Estás seguro de borrar las categorías y todos sus links?')) {
+			await clearAllCategoriesAndLinks();
+			setIsDeleteMenuOpen(false);
+			await loadData();
+		}
+	}
+
+	async function handleClearBackground() {
+		await clearBackgroundImage();
+		const bgLayer = document.getElementById('bg-layer');
+		if (bgLayer) bgLayer.style.backgroundImage = '';
+		setIsDeleteMenuOpen(false);
 	}
 
 	async function handleDragEnd(event: DragEndEvent) {
@@ -257,6 +391,44 @@ export function LinkManager() {
 								<FolderPlus size={18} />
 								<span>Categorías</span>
 							</button>
+							<div className="relative">
+								<button onClick={() => setIsDeleteMenuOpen(!isDeleteMenuOpen)} className="btn-secondary">
+									<Trash2 size={18} />
+									<span>Borrar</span>
+								</button>
+								{isDeleteMenuOpen && (
+									<div className="absolute right-0 mt-2 w-64 rounded-lg shadow-lg z-50" style={{ backgroundColor: 'rgba(0, 0, 0, 0.85)' }}>
+										<button
+											onClick={handleClearAll}
+											className="w-full text-left px-4 py-3 text-gray-200 hover:bg-white/10 transition-colors rounded-t-lg border-b border-white/10"
+										>
+											<div className="font-medium">Borrar todo</div>
+											<div className="text-xs text-gray-400">Links, categorías y fondo</div>
+										</button>
+										<button
+											onClick={handleClearLinksOnly}
+											className="w-full text-left px-4 py-3 text-gray-200 hover:bg-white/10 transition-colors border-b border-white/10"
+										>
+											<div className="font-medium">Borrar solo links</div>
+											<div className="text-xs text-gray-400">Mantener categorías</div>
+										</button>
+										<button
+											onClick={handleClearCategoriesWithLinks}
+											className="w-full text-left px-4 py-3 text-gray-200 hover:bg-white/10 transition-colors border-b border-white/10"
+										>
+											<div className="font-medium">Borrar categorías con links</div>
+											<div className="text-xs text-gray-400">Eliminar todo el contenido</div>
+										</button>
+										<button
+											onClick={handleClearBackground}
+											className="w-full text-left px-4 py-3 text-gray-200 hover:bg-white/10 transition-colors rounded-b-lg"
+										>
+											<div className="font-medium">Borrar fondo</div>
+											<div className="text-xs text-gray-400">Restablecer fondo</div>
+										</button>
+									</div>
+								)}
+							</div>
 						</div>
 					</>
 				)}
@@ -275,16 +447,17 @@ export function LinkManager() {
 						{linksByCategory
 							.filter(({ category }) => selectedCategory === 'all' || category.id === selectedCategory)
 							.map(({ category, links: categoryLinks }) => (
-							<SortableCategoryContainer key={category.id} id={category.id} name={category.name} onDeleteCategory={() => handleDeleteCategory(category.id)} onEditCategory={() => { setManagingCategoryId(category.id); setIsLinksManagerOpen(true); }}>
+							<SortableCategoryContainer key={category.id} id={category.id} name={category.name} onDeleteCategory={() => handleDeleteCategory(category.id)} onEditCategory={() => { setManagingCategoryId(category.id); setIsLinksManagerOpen(true); }} showControls={isMobile && isSettingsOpen}>
 								{categoryLinks.length === 0 ? (
 									<p className="text-gray-400 text-sm">No hay links en esta categoría</p>
 								) : (
 									<SortableContext items={categoryLinks.map(l => l.id)} strategy={rectSortingStrategy}>
-										<div className="grid grid-cols-5 gap-3">
+										<div className="grid grid-cols-3 md:grid-cols-5 gap-3">
 											{categoryLinks.map(link => (
 												<LinkCard
 													key={link.id}
 													link={link}
+													showControls={isMobile && isSettingsOpen}
 												/>
 											))}
 										</div>
@@ -323,6 +496,30 @@ export function LinkManager() {
 
 			{isBackgroundModalOpen && (
 				<BackgroundPicker onClose={() => setIsBackgroundModalOpen(false)} />
+			)}
+
+			{duplicateConflict && (
+				<DuplicateModal
+					incomingName={duplicateConflict.incomingName}
+					incomingUrl={duplicateConflict.incomingUrl}
+					incomingCategory={duplicateConflict.incomingCategory}
+					existingName={duplicateConflict.existingLink.name}
+					existingUrl={duplicateConflict.existingLink.url}
+					existingCategory={duplicateConflict.existingCategoryName}
+					matchType={duplicateConflict.matchType}
+					onSkip={() => {
+						duplicateConflict.resolve?.('skip');
+						setDuplicateConflict(null);
+					}}
+					onReplace={() => {
+						duplicateConflict.resolve?.('replace');
+						setDuplicateConflict(null);
+					}}
+					onAddAnyway={() => {
+						duplicateConflict.resolve?.('add');
+						setDuplicateConflict(null);
+					}}
+				/>
 			)}
 		</div>
 	);

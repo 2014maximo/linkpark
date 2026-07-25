@@ -9,9 +9,10 @@ interface SortableCategoryContainerProps {
 	children: React.ReactNode;
 	onDeleteCategory: () => void;
 	onEditCategory: () => void;
+	showControls?: boolean;
 }
 
-export function SortableCategoryContainer({ id, name, children, onDeleteCategory, onEditCategory }: SortableCategoryContainerProps) {
+export function SortableCategoryContainer({ id, name, children, onDeleteCategory, onEditCategory, showControls = false }: SortableCategoryContainerProps) {
 	const {
 		attributes,
 		listeners,
@@ -48,12 +49,12 @@ export function SortableCategoryContainer({ id, name, children, onDeleteCategory
 		>
 			<div className="flex items-center justify-between mb-4">
 				<div className="flex items-center gap-2">
-					<div {...attributes} {...listeners} className="cursor-grab opacity-0 group-hover/container:opacity-100 transition-opacity">
+					<div {...attributes} {...listeners} className={`cursor-grab transition-opacity ${showControls ? 'opacity-100' : 'opacity-0 group-hover/container:opacity-100'}`}>
 						<GripVertical size={18} className="text-gray-400" />
 					</div>
 					<h2 className="text-[26px] font-semibold text-gray-100 title-shadow">{name}</h2>
 				</div>
-				<div className="flex gap-1 opacity-0 group-hover/container:opacity-100 transition-opacity">
+				<div className={`flex gap-1 transition-opacity ${showControls ? 'opacity-100' : 'opacity-0 group-hover/container:opacity-100'}`}>
 					<button
 						onClick={onEditCategory}
 						className="p-1.5 text-yellow-400 hover:text-yellow-300 transition-colors"
