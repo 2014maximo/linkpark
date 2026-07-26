@@ -33,7 +33,7 @@ export function SortableCategoryContainer({ id, name, children, onDeleteCategory
 		transform: CSS.Transform.toString(transform),
 		transition: 'transform linear',
 		opacity: isDragging ? 0.5 : 1,
-		backgroundColor: isVisualText ? 'rgba(0, 0, 0, 0.7)' : 'rgba(0, 0, 0, 0.5)',
+		backgroundColor: isVisualText ? 'rgba(0, 0, 0, 0.85)' : 'rgba(0, 0, 0, 0.5)',
 	};
 
 	const setRefs = (node: HTMLElement | null) => {

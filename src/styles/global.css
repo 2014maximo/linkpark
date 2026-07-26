@@ -17,7 +17,10 @@ h1, h2, h3, h4, h5, h6 {
 body.theme-visualtext {
 	--font-heading: 'Open Sans', sans-serif;
 	--font-body: 'Open Sans', sans-serif;
-	color: #b6b6b6;
+}
+
+body.theme-visualtext * {
+	color: #b6b6b6 !important;
 }
 
 body.theme-visualtext h1,
@@ -74,7 +77,7 @@ body.theme-visualtext h6 {
 	}
 
 	body.theme-visualtext .glass-container {
-		background-color: rgba(255, 255, 255, 0.15);
+		background-color: rgba(0, 0, 0, 0.3);
 	}
 
 	.title-shadow {
