@@ -8,9 +8,10 @@ import { useIsMobile } from '../lib/useIsMobile';
 interface LinkCardProps {
 	link: Link;
 	showControls?: boolean;
+	onFaviconLoaded?: (linkId: string, faviconUrl: string) => void;
 }
 
-export function LinkCard({ link, showControls = false }: LinkCardProps) {
+export function LinkCard({ link, showControls = false, onFaviconLoaded }: LinkCardProps) {
 	const [faviconLoaded, setFaviconLoaded] = useState(false);
 	const [faviconError, setFaviconError] = useState(false);
 	const isMobile = useIsMobile();
@@ -25,6 +26,13 @@ export function LinkCard({ link, showControls = false }: LinkCardProps) {
 	};
 
 	const faviconUrl = link.faviconUrl || getFaviconUrl(link.url);
+
+	function handleFaviconLoad() {
+		setFaviconLoaded(true);
+		if (!link.faviconUrl && faviconUrl && onFaviconLoaded) {
+			onFaviconLoaded(link.id, faviconUrl);
+		}
+	}
 
 	return (
 		<div
@@ -58,7 +66,7 @@ export function LinkCard({ link, showControls = false }: LinkCardProps) {
 							src={faviconUrl}
 							alt=""
 							className="w-8 h-8 rounded absolute inset-0"
-							onLoad={() => setFaviconLoaded(true)}
+							onLoad={handleFaviconLoad}
 							onError={() => setFaviconError(true)}
 						/>
 					)}

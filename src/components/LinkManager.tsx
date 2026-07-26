@@ -127,6 +127,14 @@ export function LinkManager() {
 		}
 	}
 
+	async function handleFaviconLoaded(linkId: string, faviconUrl: string) {
+		const link = links.find(l => l.id === linkId);
+		if (link && !link.faviconUrl) {
+			await updateLink({ ...link, faviconUrl });
+			await loadData();
+		}
+	}
+
 	async function handleAddCategory(name: string) {
 		const maxOrder = categories.reduce((max, c) => Math.max(max, c.order), -1);
 		await addCategory(name, maxOrder + 1);
@@ -512,6 +520,7 @@ export function LinkManager() {
 													key={link.id}
 													link={link}
 													showControls={isMobile && isSettingsOpen}
+													onFaviconLoaded={handleFaviconLoaded}
 												/>
 											))}
 										</div>
