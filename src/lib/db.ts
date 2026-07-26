@@ -117,9 +117,9 @@ export async function reorderCategories(categories: Category[]): Promise<void> {
 	await tx.done;
 }
 
-export function parseLinksFile(content: string): Array<{ url: string; name: string; category: string }> {
+export function parseLinksFile(content: string): Array<{ url: string; name: string; category: string; faviconUrl?: string }> {
 	const lines = content.split('\n').filter(line => line.trim());
-	const result: Array<{ url: string; name: string; category: string }> = [];
+	const result: Array<{ url: string; name: string; category: string; faviconUrl?: string }> = [];
 
 	for (const line of lines) {
 		const parts = line.split('|').map(p => p.trim());
@@ -127,8 +127,9 @@ export function parseLinksFile(content: string): Array<{ url: string; name: stri
 			const url = parts[0];
 			const name = parts[1];
 			const category = parts[2] || 'General';
+			const faviconUrl = parts.length >= 4 && parts[3] ? parts[3] : undefined;
 			if (url && name) {
-				result.push({ url, name, category });
+				result.push({ url, name, category, faviconUrl });
 			}
 		}
 	}
@@ -148,7 +149,11 @@ export function exportLinksToText(links: Link[], categories: Category[]): string
 		if (categoryLinks.length === 0) continue;
 
 		for (const link of categoryLinks) {
-			lines.push(`${link.url} | ${link.name} | ${category.name}`);
+			if (link.faviconUrl) {
+				lines.push(`${link.url} | ${link.name} | ${category.name} | ${link.faviconUrl}`);
+			} else {
+				lines.push(`${link.url} | ${link.name} | ${category.name}`);
+			}
 		}
 	}
 

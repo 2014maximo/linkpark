@@ -226,10 +226,11 @@ export function LinkManager() {
 						url: linkData.url,
 						name: linkData.name,
 						categoryId: category.id,
+						faviconUrl: linkData.faviconUrl,
 					});
 					const idx = currentLinks.findIndex(l => l.id === conflict.id);
 					if (idx !== -1) {
-						currentLinks[idx] = { ...conflict, url: linkData.url, name: linkData.name, categoryId: category.id };
+						currentLinks[idx] = { ...conflict, url: linkData.url, name: linkData.name, categoryId: category.id, faviconUrl: linkData.faviconUrl };
 					}
 				} else {
 					const maxLinkOrder = currentLinks
@@ -240,6 +241,7 @@ export function LinkManager() {
 						name: linkData.name,
 						categoryId: category.id,
 						order: maxLinkOrder + 1,
+						faviconUrl: linkData.faviconUrl,
 					});
 					currentLinks.push(newLink);
 				}
@@ -252,6 +254,7 @@ export function LinkManager() {
 					name: linkData.name,
 					categoryId: category.id,
 					order: maxLinkOrder + 1,
+					faviconUrl: linkData.faviconUrl,
 				});
 				currentLinks.push(newLink);
 			}
