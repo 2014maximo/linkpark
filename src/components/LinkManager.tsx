@@ -26,6 +26,7 @@ import { LinksManager } from './LinksManager';
 import { BackgroundPicker } from './BackgroundPicker';
 import { SortableCategoryContainer } from './SortableCategoryContainer';
 import { DuplicateModal } from './DuplicateModal';
+import { ExportModal } from './ExportModal';
 import { Search, Upload, Download, FolderPlus, Image, Settings, Trash2, Share2 } from 'lucide-react';
 import { DndContext, closestCenter } from '@dnd-kit/core';
 import type { DragEndEvent } from '@dnd-kit/core';
@@ -40,6 +41,8 @@ export function LinkManager() {
 	const [isLinksManagerOpen, setIsLinksManagerOpen] = useState(false);
 	const [managingCategoryId, setManagingCategoryId] = useState<string | null>(null);
 	const [isBackgroundModalOpen, setIsBackgroundModalOpen] = useState(false);
+	const [isExportModalOpen, setIsExportModalOpen] = useState(false);
+	const [exportMode, setExportMode] = useState<'export' | 'share'>('export');
 	const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 	const [isDeleteMenuOpen, setIsDeleteMenuOpen] = useState(false);
 	const [selectedCategory, setSelectedCategory] = useState<string>('all');
@@ -238,29 +241,31 @@ export function LinkManager() {
 		event.target.value = '';
 	}
 
-	function handleExport() {
+	function handleExport(filename: string) {
 		const text = exportLinksToText(links, categories);
 		const blob = new Blob([text], { type: 'text/plain' });
 		const url = URL.createObjectURL(blob);
 		const a = document.createElement('a');
 		a.href = url;
-		a.download = 'links.txt';
+		a.download = `${filename}.txt`;
 		a.click();
 		URL.revokeObjectURL(url);
+		setIsExportModalOpen(false);
 	}
 
-	async function handleShare() {
+	async function handleShare(filename: string) {
 		const text = exportLinksToText(links, categories);
-		const file = new File([text], 'links.txt', { type: 'text/plain' });
+		const file = new File([text], `${filename}.txt`, { type: 'text/plain' });
 		try {
 			if (navigator.canShare && navigator.canShare({ files: [file] })) {
 				await navigator.share({ files: [file], title: 'Mis Links' });
 			} else {
-				handleExport();
+				handleExport(filename);
 			}
 		} catch {
-			handleExport();
+			handleExport(filename);
 		}
+		setIsExportModalOpen(false);
 	}
 
 	async function handleClearAll() {
@@ -398,12 +403,12 @@ export function LinkManager() {
 								<input type="file" accept=".txt" onChange={handleImport} className="hidden" />
 							</label>
 							{isMobile ? (
-								<button onClick={handleShare} className="btn-secondary">
+								<button onClick={() => { setExportMode('share'); setIsExportModalOpen(true); }} className="btn-secondary">
 									<Share2 size={18} />
 									<span>Compartir</span>
 								</button>
 							) : (
-								<button onClick={handleExport} className="btn-secondary">
+								<button onClick={() => { setExportMode('export'); setIsExportModalOpen(true); }} className="btn-secondary">
 									<Download size={18} />
 									<span>Exportar</span>
 								</button>
@@ -517,6 +522,14 @@ export function LinkManager() {
 
 			{isBackgroundModalOpen && (
 				<BackgroundPicker onClose={() => setIsBackgroundModalOpen(false)} />
+			)}
+
+			{isExportModalOpen && (
+				<ExportModal
+					mode={exportMode}
+					onClose={() => setIsExportModalOpen(false)}
+					onConfirm={exportMode === 'export' ? handleExport : handleShare}
+				/>
 			)}
 
 			{duplicateConflict && (
