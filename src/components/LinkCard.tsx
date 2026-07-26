@@ -3,6 +3,7 @@ import type { Link } from '../types';
 import { getFaviconUrl } from '../lib/db';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { useIsMobile } from '../lib/useIsMobile';
 
 interface LinkCardProps {
 	link: Link;
@@ -12,6 +13,7 @@ interface LinkCardProps {
 export function LinkCard({ link, showControls = false }: LinkCardProps) {
 	const [faviconLoaded, setFaviconLoaded] = useState(false);
 	const [faviconError, setFaviconError] = useState(false);
+	const isMobile = useIsMobile();
 	const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
 		id: link.id,
 	});
@@ -41,7 +43,7 @@ export function LinkCard({ link, showControls = false }: LinkCardProps) {
 				</svg>
 			</div>
 
-			<a href={link.url} target="_blank" rel="noopener noreferrer" className="flex flex-col items-center gap-2 w-full">
+			<a href={link.url} target="_blank" rel="noopener noreferrer" title={link.name} className="flex flex-col items-center gap-2 w-full">
 				<div className="w-8 h-8 relative">
 					{!faviconLoaded && (
 						<div className="w-8 h-8 bg-gray-600 rounded flex items-center justify-center absolute inset-0">
@@ -61,7 +63,7 @@ export function LinkCard({ link, showControls = false }: LinkCardProps) {
 						/>
 					)}
 				</div>
-				<span className="text-sm text-center truncate w-full text-gray-100 text-shadow">{link.name}</span>
+				<span className={`text-sm text-center w-full text-gray-100 text-shadow ${isMobile ? 'whitespace-normal leading-tight' : 'truncate'}`}>{link.name}</span>
 			</a>
 		</div>
 	);
