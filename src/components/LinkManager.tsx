@@ -18,6 +18,8 @@ import {
 	clearAllLinks,
 	clearAllCategoriesAndLinks,
 	clearAllData,
+	getTemplate,
+	setTemplate,
 } from '../lib/db';
 import { useIsMobile } from '../lib/useIsMobile';
 import { LinkCard } from './LinkCard';
@@ -27,7 +29,8 @@ import { BackgroundPicker } from './BackgroundPicker';
 import { SortableCategoryContainer } from './SortableCategoryContainer';
 import { DuplicateModal } from './DuplicateModal';
 import { ExportModal } from './ExportModal';
-import { Search, Upload, Download, FolderPlus, Image, Settings, Trash2, Share2 } from 'lucide-react';
+import { TemplateModal } from './TemplateModal';
+import { Search, Upload, Download, FolderPlus, Image, Settings, Trash2, Share2, Palette } from 'lucide-react';
 import { DndContext, closestCenter } from '@dnd-kit/core';
 import type { DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, rectSortingStrategy, arrayMove } from '@dnd-kit/sortable';
@@ -42,6 +45,8 @@ export function LinkManager() {
 	const [managingCategoryId, setManagingCategoryId] = useState<string | null>(null);
 	const [isBackgroundModalOpen, setIsBackgroundModalOpen] = useState(false);
 	const [isExportModalOpen, setIsExportModalOpen] = useState(false);
+	const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
+	const [currentTemplate, setCurrentTemplate] = useState('linkpark');
 	const [exportMode, setExportMode] = useState<'export' | 'share'>('export');
 	const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 	const [isDeleteMenuOpen, setIsDeleteMenuOpen] = useState(false);
@@ -64,7 +69,23 @@ export function LinkManager() {
 			const bgLayer = document.getElementById('bg-layer');
 			if (bgLayer && bg) bgLayer.style.backgroundImage = `url(${bg})`;
 		});
+		getTemplate().then(template => {
+			setCurrentTemplate(template);
+			applyTemplate(template);
+		});
 	}, []);
+
+	function applyTemplate(template: string) {
+		document.body.classList.remove('theme-linkpark', 'theme-visualtext');
+		document.body.classList.add(`theme-${template}`);
+	}
+
+	async function handleTemplateSelect(template: string) {
+		setCurrentTemplate(template);
+		applyTemplate(template);
+		await setTemplate(template);
+		setIsTemplateModalOpen(false);
+	}
 
 	async function loadData() {
 		const [linksData, categoriesData] = await Promise.all([getAllLinks(), getAllCategories()]);
@@ -417,6 +438,10 @@ export function LinkManager() {
 								<FolderPlus size={18} />
 								<span>Categorías</span>
 							</button>
+							<button onClick={() => setIsTemplateModalOpen(true)} className="btn-secondary">
+								<Palette size={18} />
+								<span>Templates</span>
+							</button>
 							<div className="relative">
 								<button onClick={() => setIsDeleteMenuOpen(!isDeleteMenuOpen)} className="btn-secondary">
 									<Trash2 size={18} />
@@ -529,6 +554,14 @@ export function LinkManager() {
 					mode={exportMode}
 					onClose={() => setIsExportModalOpen(false)}
 					onConfirm={exportMode === 'export' ? handleExport : handleShare}
+				/>
+			)}
+
+			{isTemplateModalOpen && (
+				<TemplateModal
+					currentTemplate={currentTemplate}
+					onClose={() => setIsTemplateModalOpen(false)}
+					onSelect={handleTemplateSelect}
 				/>
 			)}
 

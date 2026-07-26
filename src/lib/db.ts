@@ -180,6 +180,17 @@ export async function clearBackgroundImage(): Promise<void> {
 	await db.delete('settings', 'backgroundImage');
 }
 
+export async function getTemplate(): Promise<string> {
+	const db = await getDB();
+	const result = await db.get('settings', 'template');
+	return result?.value ?? 'linkpark';
+}
+
+export async function setTemplate(template: string): Promise<void> {
+	const db = await getDB();
+	await db.put('settings', { key: 'template', value: template });
+}
+
 export async function clearAllLinks(): Promise<void> {
 	const db = await getDB();
 	const tx = db.transaction('links', 'readwrite');

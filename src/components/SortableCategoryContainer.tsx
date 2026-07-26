@@ -27,11 +27,13 @@ export function SortableCategoryContainer({ id, name, children, onDeleteCategory
 		id,
 	});
 
+	const isVisualText = document.body.classList.contains('theme-visualtext');
+
 	const style = {
 		transform: CSS.Transform.toString(transform),
 		transition: 'transform linear',
 		opacity: isDragging ? 0.5 : 1,
-		backgroundColor: 'rgba(0, 0, 0, 0.5)',
+		backgroundColor: isVisualText ? 'rgba(0, 0, 0, 0.7)' : 'rgba(0, 0, 0, 0.5)',
 	};
 
 	const setRefs = (node: HTMLElement | null) => {
