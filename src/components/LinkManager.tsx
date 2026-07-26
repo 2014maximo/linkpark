@@ -112,10 +112,10 @@ export function LinkManager() {
 		await loadData();
 	}
 
-	async function handleUpdateLink(id: string, url: string, name: string, categoryId: string) {
+	async function handleUpdateLink(id: string, url: string, name: string, categoryId: string, faviconUrl?: string) {
 		const link = links.find(l => l.id === id);
 		if (link) {
-			await updateLink({ ...link, url, name, categoryId });
+			await updateLink({ ...link, url, name, categoryId, faviconUrl });
 			await loadData();
 		}
 	}
@@ -538,8 +538,8 @@ export function LinkManager() {
 					onAdd={async (url, name) => {
 						await handleAddLink(url, name, managingCategoryId);
 					}}
-					onUpdate={async (id, url, name) => {
-						await handleUpdateLink(id, url, name, managingCategoryId);
+					onUpdate={async (id, url, name, faviconUrl) => {
+						await handleUpdateLink(id, url, name, managingCategoryId, faviconUrl);
 					}}
 					onDelete={handleDeleteLink}
 				/>

@@ -24,7 +24,7 @@ export function LinkCard({ link, showControls = false }: LinkCardProps) {
 		opacity: isDragging ? 0.5 : 1,
 	};
 
-	const faviconUrl = getFaviconUrl(link.url);
+	const faviconUrl = link.faviconUrl || getFaviconUrl(link.url);
 
 	return (
 		<div

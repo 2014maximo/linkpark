@@ -5,6 +5,7 @@ export interface Link {
 	categoryId: string;
 	order: number;
 	createdAt: number;
+	faviconUrl?: string;
 }
 
 export interface Category {

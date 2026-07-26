@@ -7,7 +7,7 @@ interface LinksManagerProps {
 	category: Category;
 	onClose: () => void;
 	onAdd: (url: string, name: string) => Promise<void>;
-	onUpdate: (id: string, url: string, name: string) => Promise<void>;
+	onUpdate: (id: string, url: string, name: string, faviconUrl?: string) => Promise<void>;
 	onDelete: (id: string) => Promise<void>;
 }
 
@@ -17,6 +17,7 @@ export function LinksManager({ links, category, onClose, onAdd, onUpdate, onDele
 	const [editingId, setEditingId] = useState<string | null>(null);
 	const [editingUrl, setEditingUrl] = useState('');
 	const [editingName, setEditingName] = useState('');
+	const [editingFaviconUrl, setEditingFaviconUrl] = useState('');
 	const [isSubmitting, setIsSubmitting] = useState(false);
 
 	useEffect(() => {
@@ -45,10 +46,11 @@ export function LinksManager({ links, category, onClose, onAdd, onUpdate, onDele
 
 		setIsSubmitting(true);
 		try {
-			await onUpdate(id, editingUrl.trim(), editingName.trim());
+			await onUpdate(id, editingUrl.trim(), editingName.trim(), editingFaviconUrl.trim() || undefined);
 			setEditingId(null);
 			setEditingUrl('');
 			setEditingName('');
+			setEditingFaviconUrl('');
 		} finally {
 			setIsSubmitting(false);
 		}
@@ -109,6 +111,13 @@ export function LinksManager({ links, category, onClose, onAdd, onUpdate, onDele
 											className="input-field flex-1 min-w-0"
 											placeholder="Nombre"
 										/>
+										<input
+											type="url"
+											value={editingFaviconUrl}
+											onChange={e => setEditingFaviconUrl(e.target.value)}
+											className="input-field flex-1 min-w-0"
+											placeholder="URL del favicon (opcional)"
+										/>
 										<div className="flex gap-1">
 											<button
 												onClick={() => handleUpdate(link.id)}
@@ -137,6 +146,7 @@ export function LinksManager({ links, category, onClose, onAdd, onUpdate, onDele
 												setEditingId(link.id);
 												setEditingUrl(link.url);
 												setEditingName(link.name);
+												setEditingFaviconUrl(link.faviconUrl || '');
 											}}
 											className="p-1 text-blue-400 hover:text-blue-300 transition-colors"
 										>
