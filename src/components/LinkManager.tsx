@@ -26,7 +26,7 @@ import { LinksManager } from './LinksManager';
 import { BackgroundPicker } from './BackgroundPicker';
 import { SortableCategoryContainer } from './SortableCategoryContainer';
 import { DuplicateModal } from './DuplicateModal';
-import { Search, Upload, Download, FolderPlus, Image, Settings, Trash2 } from 'lucide-react';
+import { Search, Upload, Download, FolderPlus, Image, Settings, Trash2, Share2 } from 'lucide-react';
 import { DndContext, closestCenter } from '@dnd-kit/core';
 import type { DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, rectSortingStrategy, arrayMove } from '@dnd-kit/sortable';
@@ -249,6 +249,20 @@ export function LinkManager() {
 		URL.revokeObjectURL(url);
 	}
 
+	async function handleShare() {
+		const text = exportLinksToText(links, categories);
+		const file = new File([text], 'links.txt', { type: 'text/plain' });
+		try {
+			if (navigator.canShare && navigator.canShare({ files: [file] })) {
+				await navigator.share({ files: [file], title: 'Mis Links' });
+			} else {
+				handleExport();
+			}
+		} catch {
+			handleExport();
+		}
+	}
+
 	async function handleClearAll() {
 		if (confirm('¿Estás seguro de borrar TODO? Se eliminarán todos los links, categorías y el fondo.')) {
 			await clearAllData();
@@ -383,10 +397,17 @@ export function LinkManager() {
 								<span>Importar</span>
 								<input type="file" accept=".txt" onChange={handleImport} className="hidden" />
 							</label>
-							<button onClick={handleExport} className="btn-secondary">
-								<Download size={18} />
-								<span>Exportar</span>
-							</button>
+							{isMobile ? (
+								<button onClick={handleShare} className="btn-secondary">
+									<Share2 size={18} />
+									<span>Compartir</span>
+								</button>
+							) : (
+								<button onClick={handleExport} className="btn-secondary">
+									<Download size={18} />
+									<span>Exportar</span>
+								</button>
+							)}
 							<button onClick={() => setIsCategoryModalOpen(true)} className="btn-secondary">
 								<FolderPlus size={18} />
 								<span>Categorías</span>
