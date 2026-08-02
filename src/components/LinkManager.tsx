@@ -30,7 +30,7 @@ import { SortableCategoryContainer } from './SortableCategoryContainer';
 import { DuplicateModal } from './DuplicateModal';
 import { ExportModal } from './ExportModal';
 import { TemplateModal } from './TemplateModal';
-import { Search, Upload, Download, FolderPlus, Image, Settings, Trash2, Share2, Palette } from 'lucide-react';
+import { Search, Upload, Download, FolderPlus, Image, Settings, Trash2, Share2, Palette, X } from 'lucide-react';
 import { DndContext, closestCenter } from '@dnd-kit/core';
 import type { DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, rectSortingStrategy, arrayMove } from '@dnd-kit/sortable';
@@ -409,8 +409,17 @@ export function LinkManager() {
 								placeholder="Buscar links..."
 								value={searchTerm}
 								onChange={e => setSearchTerm(e.target.value)}
-								className="input-field pl-10 w-full"
+								className="input-field pl-10 pr-10 w-full"
 							/>
+							{searchTerm && (
+								<button
+									type="button"
+									onClick={() => setSearchTerm('')}
+									className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+								>
+									<X size={20} />
+								</button>
+							)}
 						</div>
 						<select
 							value={selectedCategory}
@@ -507,7 +516,11 @@ export function LinkManager() {
 				<SortableContext items={categories.filter(c => selectedCategory === 'all' || c.id === selectedCategory).map(c => c.id)} strategy={rectSortingStrategy}>
 					<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
 						{linksByCategory
-							.filter(({ category }) => selectedCategory === 'all' || category.id === selectedCategory)
+							.filter(({ category, links: categoryLinks }) => {
+								const matchesCategory = selectedCategory === 'all' || category.id === selectedCategory;
+								const hasLinks = searchTerm === '' || categoryLinks.length > 0;
+								return matchesCategory && hasLinks;
+							})
 							.map(({ category, links: categoryLinks }) => (
 							<SortableCategoryContainer key={category.id} id={category.id} name={category.name} onDeleteCategory={() => handleDeleteCategory(category.id)} onEditCategory={() => { setManagingCategoryId(category.id); setIsLinksManagerOpen(true); }} showControls={isMobile && isSettingsOpen}>
 								{categoryLinks.length === 0 ? (
