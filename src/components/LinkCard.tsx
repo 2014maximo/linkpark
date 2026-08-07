@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { Link } from '../types';
-import { getFaviconUrl } from '../lib/db';
+import { getFaviconUrl } from '../lib/favicon';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { useIsMobile } from '../lib/useIsMobile';

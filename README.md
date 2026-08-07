@@ -4,16 +4,23 @@ Una aplicación web para gestionar tus links favoritos organizados por categorí
 
 ## Características
 
-- ✅ Organización de links por categorías
-- ✅ Importación/Exportación de links desde archivos `.txt`
-- ✅ Búsqueda y filtrado de links
-- ✅ Drag & drop para reordenar links y categorías
-- ✅ Edición y eliminación de links y categorías
-- ✅ Favicons automáticos usando Google Favicon API
-- ✅ Estilo dark mode
-- ✅ Links abren en nueva pestaña (`target="_blank"`)
-- ✅ Almacenamiento local en IndexedDB
-- ✅ Despliegue en GitLab Pages
+- Organización de links por categorías con orden personalizado
+- Drag & drop de links (entre categorías y reordenar dentro)
+- Drag & drop de categorías (reordenar)
+- Búsqueda por nombre y URL de links
+- Filtrado por categoría
+- Favicons automáticos usando DuckDuckGo Favicon API
+- Importación/Exportación de links desde archivos `.txt`
+- Resolución de duplicados al importar (skip / reemplazar / agregar)
+- Compartir links vía Web Share API (mobile)
+- Personalización de fondo (presets desktop/mobile + imagen custom)
+- Templates/temas: LinkPark (Six Caps) y Visual Text (Open Sans)
+- Borrar selectivo: todo / solo links / categorías+links / solo fondo
+- Estilo glassmorphism con dark mode
+- Links abren en nueva pestaña (`target="_blank"`)
+- Almacenamiento local en IndexedDB (sin backend)
+- Responsive con controles adaptados a mobile
+- Despliegue en GitLab Pages y GitHub Pages
 
 ## Formato de archivo .txt
 
@@ -21,6 +28,7 @@ El formato para importar/exportar links es:
 
 ```
 URL | Nombre | Categoría
+URL | Nombre | Categoría | FaviconUrl (opcional)
 ```
 
 Ejemplo:
@@ -38,9 +46,6 @@ Si no se especifica categoría, se asigna "General" por defecto.
 # Instalar dependencias
 pnpm install
 
-# Aprobar scripts de build (solo la primera vez)
-pnpm approve-builds esbuild
-
 # Iniciar servidor de desarrollo
 pnpm dev
 
@@ -51,62 +56,55 @@ pnpm build
 pnpm preview
 ```
 
-## Despliegue en GitLab Pages
+## Despliegue
 
-El proyecto está configurado para despliegue automático en GitLab Pages mediante CI/CD.
+El proyecto incluye configuración para despliegue automático:
 
-### Pasos:
+- **GitLab Pages**: `.gitlab-ci.yml`
+- **GitHub Pages**: `.github/workflows/static.yml`
 
-1. Crea un repositorio en GitLab
-2. Sube el código:
-   ```bash
-   git init
-   git add .
-   git commit -m "Initial commit"
-   git remote add origin https://gitlab.com/usuario/linkpark.git
-   git push -u origin main
-   ```
-3. GitLab CI/CD construirá y desplegará automáticamente el sitio
-4. Accede a tu sitio en: `https://usuario.gitlab.io/linkpark/`
-
-### Configuración opcional:
-
-Si quieres usar un dominio personalizado:
-1. Ve a Settings > Pages en GitLab
-2. Agrega tu dominio personalizado
-3. Configura los registros DNS según las instrucciones
+Ambos se ejecutan automáticamente al hacer push a la rama `main`.
 
 ## Estructura del proyecto
 
 ```
 linkpark/
 ├── src/
-│   ├── components/       # Componentes React
-│   │   ├── LinkManager.tsx
-│   │   ├── LinkCard.tsx
-│   │   ├── AddLinkModal.tsx
-│   │   └── CategoryManager.tsx
-│   ├── layouts/          # Layouts de Astro
-│   │   └── Layout.astro
-│   ├── lib/              # Utilidades
-│   │   └── db.ts         # IndexedDB
-│   ├── pages/            # Páginas de Astro
-│   │   └── index.astro
-│   ├── styles/           # Estilos globales
-│   │   └── global.css
-│   └── types/            # Tipos TypeScript
-│       └── index.ts
-├── public/               # Archivos estáticos
-│   └── favicon.svg
-├── .gitlab-ci.yml        # Configuración CI/CD
-└── astro.config.mjs      # Configuración de Astro
+│   ├── components/
+│   │   ├── LinkManager.tsx              # Componente raíz (estado, import/export, DnD)
+│   │   ├── LinkCard.tsx                 # Card de link con favicon y drag
+│   │   ├── LinksManager.tsx             # Modal gestionar links de categoría
+│   │   ├── CategoryManager.tsx          # Modal gestionar categorías
+│   │   ├── SortableCategoryContainer.tsx # Contenedor de categoría draggable
+│   │   ├── BackgroundPicker.tsx         # Modal seleccionar fondo
+│   │   ├── TemplateModal.tsx            # Modal seleccionar tema
+│   │   ├── ExportModal.tsx              # Modal nombrar archivo export
+│   │   ├── DuplicateModal.tsx           # Modal resolver duplicados
+│   │   └── AuthorBadge.tsx              # Firma del autor
+│   ├── layouts/
+│   │   └── Layout.astro                 # Layout base HTML
+│   ├── lib/
+│   │   ├── db.ts                        # Operaciones IndexedDB
+│   │   ├── importExport.ts              # Parseo y exportación de texto
+│   │   ├── favicon.ts                   # Generación de URLs de favicons
+│   │   └── useIsMobile.ts              # Hook detección mobile
+│   ├── pages/
+│   │   └── index.astro                  # Página única
+│   ├── styles/
+│   │   └── global.css                   # Tailwind + estilos custom
+│   └── types/
+│       └── index.ts                     # Tipos TypeScript
+├── public/                              # Archivos estáticos (fondos, favicons)
+├── .gitlab-ci.yml                       # CI/CD GitLab
+├── .github/workflows/static.yml         # CI/CD GitHub
+└── astro.config.mjs                     # Configuración Astro
 ```
 
 ## Tecnologías
 
-- **Astro** - Framework web
-- **React** - Componentes interactivos
-- **Tailwind CSS** - Estilos
+- **Astro 7** - Framework web (SSG estático)
+- **React 19** - Componentes interactivos
+- **Tailwind CSS 4** - Estilos
 - **IndexedDB** - Almacenamiento local (vía `idb`)
 - **@dnd-kit** - Drag & drop
 - **Lucide React** - Íconos

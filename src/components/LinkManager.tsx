@@ -11,8 +11,6 @@ import {
 	deleteCategory,
 	reorderLinks,
 	reorderCategories,
-	parseLinksFile,
-	exportLinksToText,
 	getBackgroundImage,
 	clearBackgroundImage,
 	clearAllLinks,
@@ -21,6 +19,7 @@ import {
 	getTemplate,
 	setTemplate,
 } from '../lib/db';
+import { parseLinksFile, exportLinksToText } from '../lib/importExport';
 import { useIsMobile } from '../lib/useIsMobile';
 import { LinkCard } from './LinkCard';
 import { CategoryManager } from './CategoryManager';
@@ -290,7 +289,7 @@ export function LinkManager() {
 		const file = new File([text], `${filename}.txt`, { type: 'text/plain' });
 		try {
 			if (navigator.canShare && navigator.canShare({ files: [file] })) {
-				await navigator.share({ files: [file], title: 'Mis Links' });
+				await navigator.share({ files: [file], title: filename });
 			} else {
 				handleExport(filename);
 			}
@@ -522,7 +521,7 @@ export function LinkManager() {
 								return matchesCategory && hasLinks;
 							})
 							.map(({ category, links: categoryLinks }) => (
-							<SortableCategoryContainer key={category.id} id={category.id} name={category.name} onDeleteCategory={() => handleDeleteCategory(category.id)} onEditCategory={() => { setManagingCategoryId(category.id); setIsLinksManagerOpen(true); }} showControls={isMobile && isSettingsOpen}>
+							<SortableCategoryContainer key={category.id} id={category.id} name={category.name} onDeleteCategory={() => handleDeleteCategory(category.id)} onEditCategory={() => { setManagingCategoryId(category.id); setIsLinksManagerOpen(true); }} showControls={isMobile && isSettingsOpen} isVisualText={currentTemplate === 'visualtext'}>
 								{categoryLinks.length === 0 ? (
 									<p className="text-gray-400 text-sm">No hay links en esta categoría</p>
 								) : (

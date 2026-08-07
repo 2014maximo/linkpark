@@ -10,9 +10,10 @@ interface SortableCategoryContainerProps {
 	onDeleteCategory: () => void;
 	onEditCategory: () => void;
 	showControls?: boolean;
+	isVisualText?: boolean;
 }
 
-export function SortableCategoryContainer({ id, name, children, onDeleteCategory, onEditCategory, showControls = false }: SortableCategoryContainerProps) {
+export function SortableCategoryContainer({ id, name, children, onDeleteCategory, onEditCategory, showControls = false, isVisualText = false }: SortableCategoryContainerProps) {
 	const {
 		attributes,
 		listeners,
@@ -26,8 +27,6 @@ export function SortableCategoryContainer({ id, name, children, onDeleteCategory
 	const { isOver, setNodeRef: setDroppableNodeRef } = useDroppable({
 		id,
 	});
-
-	const isVisualText = document.body.classList.contains('theme-visualtext');
 
 	const style = {
 		transform: CSS.Transform.toString(transform),
