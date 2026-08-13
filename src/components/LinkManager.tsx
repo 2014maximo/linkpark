@@ -18,6 +18,8 @@ import {
 	clearAllData,
 	getTemplate,
 	setTemplate,
+	getCategoryViewMode,
+	setCategoryViewMode,
 } from '../lib/db';
 import { parseLinksFile, exportLinksToText } from '../lib/importExport';
 import { useIsMobile } from '../lib/useIsMobile';
@@ -50,6 +52,7 @@ export function LinkManager() {
 	const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 	const [isDeleteMenuOpen, setIsDeleteMenuOpen] = useState(false);
 	const [selectedCategory, setSelectedCategory] = useState<string>('all');
+	const [categoryViewModes, setCategoryViewModes] = useState<Record<string, 'icons' | 'list'>>({});
 	const [duplicateConflict, setDuplicateConflict] = useState<{
 		incomingName: string;
 		incomingUrl: string;
@@ -72,6 +75,9 @@ export function LinkManager() {
 			setCurrentTemplate(template);
 			applyTemplate(template);
 		});
+		getCategoryViewMode().then(modes => {
+			setCategoryViewModes(modes);
+		});
 	}, []);
 
 	function applyTemplate(template: string) {
@@ -84,6 +90,14 @@ export function LinkManager() {
 		applyTemplate(template);
 		await setTemplate(template);
 		setIsTemplateModalOpen(false);
+	}
+
+	async function handleToggleViewMode(categoryId: string) {
+		const currentMode = categoryViewModes[categoryId] || 'icons';
+		const newMode = currentMode === 'icons' ? 'list' : 'icons';
+		const newModes = { ...categoryViewModes, [categoryId]: newMode };
+		setCategoryViewModes(newModes);
+		await setCategoryViewMode(categoryId, newMode);
 	}
 
 	async function loadData() {
@@ -521,17 +535,18 @@ export function LinkManager() {
 								return matchesCategory && hasLinks;
 							})
 							.map(({ category, links: categoryLinks }) => (
-							<SortableCategoryContainer key={category.id} id={category.id} name={category.name} onDeleteCategory={() => handleDeleteCategory(category.id)} onEditCategory={() => { setManagingCategoryId(category.id); setIsLinksManagerOpen(true); }} showControls={isMobile && isSettingsOpen} isVisualText={currentTemplate === 'visualtext'}>
+							<SortableCategoryContainer key={category.id} id={category.id} name={category.name} onDeleteCategory={() => handleDeleteCategory(category.id)} onEditCategory={() => { setManagingCategoryId(category.id); setIsLinksManagerOpen(true); }} onToggleViewMode={() => handleToggleViewMode(category.id)} showControls={isMobile && isSettingsOpen} isVisualText={currentTemplate === 'visualtext'} viewMode={categoryViewModes[category.id] || 'icons'}>
 								{categoryLinks.length === 0 ? (
 									<p className="text-gray-400 text-sm">No hay links en esta categoría</p>
 								) : (
 									<SortableContext items={categoryLinks.map(l => l.id)} strategy={rectSortingStrategy}>
-										<div className="grid grid-cols-3 md:grid-cols-5 gap-3">
+										<div className={categoryViewModes[category.id] === 'list' ? 'flex flex-col gap-1' : 'grid grid-cols-3 md:grid-cols-5 gap-3'}>
 											{categoryLinks.map(link => (
 												<LinkCard
 													key={link.id}
 													link={link}
 													showControls={isMobile && isSettingsOpen}
+													viewMode={categoryViewModes[category.id] || 'icons'}
 													onFaviconLoaded={handleFaviconLoaded}
 												/>
 											))}

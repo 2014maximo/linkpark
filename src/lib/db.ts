@@ -144,6 +144,19 @@ export async function setTemplate(template: string): Promise<void> {
 	await db.put('settings', { key: 'template', value: template });
 }
 
+export async function getCategoryViewMode(): Promise<Record<string, 'icons' | 'list'>> {
+	const db = await getDB();
+	const result = await db.get('settings', 'categoryViewModes');
+	return result?.value ?? {};
+}
+
+export async function setCategoryViewMode(categoryId: string, mode: 'icons' | 'list'): Promise<void> {
+	const db = await getDB();
+	const current = await getCategoryViewMode();
+	current[categoryId] = mode;
+	await db.put('settings', { key: 'categoryViewModes', value: current });
+}
+
 export async function clearAllLinks(): Promise<void> {
 	const db = await getDB();
 	const tx = db.transaction('links', 'readwrite');

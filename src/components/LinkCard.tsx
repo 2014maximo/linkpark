@@ -8,10 +8,11 @@ import { useIsMobile } from '../lib/useIsMobile';
 interface LinkCardProps {
 	link: Link;
 	showControls?: boolean;
+	viewMode?: 'icons' | 'list';
 	onFaviconLoaded?: (linkId: string, faviconUrl: string) => void;
 }
 
-export function LinkCard({ link, showControls = false, onFaviconLoaded }: LinkCardProps) {
+export function LinkCard({ link, showControls = false, viewMode = 'icons', onFaviconLoaded }: LinkCardProps) {
 	const [faviconLoaded, setFaviconLoaded] = useState(false);
 	const [faviconError, setFaviconError] = useState(false);
 	const isMobile = useIsMobile();
@@ -32,6 +33,49 @@ export function LinkCard({ link, showControls = false, onFaviconLoaded }: LinkCa
 		if (!link.faviconUrl && faviconUrl && onFaviconLoaded) {
 			onFaviconLoaded(link.id, faviconUrl);
 		}
+	}
+
+	if (viewMode === 'list') {
+		return (
+			<div
+				ref={setNodeRef}
+				style={style}
+				className="group relative flex items-center gap-3 px-3 py-2 rounded hover:bg-white/10 transition-colors"
+			>
+				<div {...attributes} {...listeners} className={`cursor-grab transition-opacity ${showControls ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
+					<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-gray-400">
+						<circle cx="9" cy="5" r="1"/>
+						<circle cx="9" cy="12" r="1"/>
+						<circle cx="9" cy="19" r="1"/>
+						<circle cx="15" cy="5" r="1"/>
+						<circle cx="15" cy="12" r="1"/>
+						<circle cx="15" cy="19" r="1"/>
+					</svg>
+				</div>
+				<a href={link.url} target="_blank" rel="noopener noreferrer" title={link.name} className="flex items-center gap-3 flex-1 min-w-0">
+					<div className="w-5 h-5 relative shrink-0">
+						{!faviconLoaded && (
+							<div className="w-5 h-5 bg-gray-600 rounded flex items-center justify-center absolute inset-0">
+								<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-white">
+									<path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+									<path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+								</svg>
+							</div>
+						)}
+						{faviconUrl && !faviconError && (
+							<img
+								src={faviconUrl}
+								alt=""
+								className="w-5 h-5 rounded absolute inset-0"
+								onLoad={handleFaviconLoad}
+								onError={() => setFaviconError(true)}
+							/>
+						)}
+					</div>
+					<span className="text-sm text-gray-100 truncate">{link.name}</span>
+				</a>
+			</div>
+		);
 	}
 
 	return (

@@ -1,7 +1,7 @@
 import { useSortable } from '@dnd-kit/sortable';
 import { useDroppable } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
-import { Plus, Trash2, GripVertical } from 'lucide-react';
+import { Plus, Trash2, GripVertical, LayoutList, LayoutGrid } from 'lucide-react';
 
 interface SortableCategoryContainerProps {
 	id: string;
@@ -9,11 +9,13 @@ interface SortableCategoryContainerProps {
 	children: React.ReactNode;
 	onDeleteCategory: () => void;
 	onEditCategory: () => void;
+	onToggleViewMode: () => void;
 	showControls?: boolean;
 	isVisualText?: boolean;
+	viewMode?: 'icons' | 'list';
 }
 
-export function SortableCategoryContainer({ id, name, children, onDeleteCategory, onEditCategory, showControls = false, isVisualText = false }: SortableCategoryContainerProps) {
+export function SortableCategoryContainer({ id, name, children, onDeleteCategory, onEditCategory, onToggleViewMode, showControls = false, isVisualText = false, viewMode = 'icons' }: SortableCategoryContainerProps) {
 	const {
 		attributes,
 		listeners,
@@ -56,6 +58,13 @@ export function SortableCategoryContainer({ id, name, children, onDeleteCategory
 					<h2 className="text-[26px] font-semibold text-gray-100 title-shadow">{name}</h2>
 				</div>
 				<div className={`flex gap-1 transition-opacity ${showControls ? 'opacity-100' : 'opacity-0 group-hover/container:opacity-100'}`}>
+					<button
+						onClick={onToggleViewMode}
+						className="p-1.5 text-blue-400 hover:text-blue-300 transition-colors"
+						title={viewMode === 'icons' ? 'Cambiar a modo lista' : 'Cambiar a modo iconos'}
+					>
+						{viewMode === 'icons' ? <LayoutList size={18} /> : <LayoutGrid size={18} />}
+					</button>
 					<button
 						onClick={onEditCategory}
 						className="p-1.5 text-yellow-400 hover:text-yellow-300 transition-colors"

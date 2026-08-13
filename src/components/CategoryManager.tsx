@@ -15,11 +15,20 @@ export function CategoryManager({ categories, onClose, onAdd, onUpdate, onDelete
 	const [editingId, setEditingId] = useState<string | null>(null);
 	const [editingName, setEditingName] = useState('');
 	const [isSubmitting, setIsSubmitting] = useState(false);
+	const [addError, setAddError] = useState('');
+	const [editError, setEditError] = useState('');
 
 	async function handleAdd(e: React.FormEvent) {
 		e.preventDefault();
 		if (!newCategoryName.trim()) return;
 
+		const nameExists = categories.some(c => c.name.toLowerCase() === newCategoryName.trim().toLowerCase());
+		if (nameExists) {
+			setAddError('Ya existe una categoría con ese nombre');
+			return;
+		}
+
+		setAddError('');
 		setIsSubmitting(true);
 		try {
 			await onAdd(newCategoryName.trim());
@@ -32,6 +41,13 @@ export function CategoryManager({ categories, onClose, onAdd, onUpdate, onDelete
 	async function handleUpdate(id: string) {
 		if (!editingName.trim()) return;
 
+		const nameExists = categories.some(c => c.id !== id && c.name.toLowerCase() === editingName.trim().toLowerCase());
+		if (nameExists) {
+			setEditError('Ya existe una categoría con ese nombre');
+			return;
+		}
+
+		setEditError('');
 		setIsSubmitting(true);
 		try {
 			await onUpdate(id, editingName.trim());
@@ -53,13 +69,16 @@ export function CategoryManager({ categories, onClose, onAdd, onUpdate, onDelete
 				</div>
 
 				<form onSubmit={handleAdd} className="flex gap-2 mb-4">
-					<input
-						type="text"
-						value={newCategoryName}
-						onChange={e => setNewCategoryName(e.target.value)}
-						placeholder="Nueva categoría"
-						className="input-field flex-1"
-					/>
+					<div className="flex-1">
+						<input
+							type="text"
+							value={newCategoryName}
+							onChange={e => { setNewCategoryName(e.target.value); setAddError(''); }}
+							placeholder="Nueva categoría"
+							className="input-field w-full"
+						/>
+						{addError && <p className="text-red-400 text-xs mt-1">{addError}</p>}
+					</div>
 					<button type="submit" disabled={isSubmitting} className="btn-primary disabled:opacity-50">
 						<Plus size={18} />
 					</button>
@@ -70,51 +89,55 @@ export function CategoryManager({ categories, onClose, onAdd, onUpdate, onDelete
 						<p className="text-gray-400 text-center py-4">No hay categorías</p>
 					) : (
 						categories.map(category => (
-							<div key={category.id} className="flex items-center gap-2 glass-container rounded p-2">
-								{editingId === category.id ? (
-									<>
-										<input
-											type="text"
-											value={editingName}
-											onChange={e => setEditingName(e.target.value)}
-											className="input-field flex-1"
-											autoFocus
-										/>
-										<button
-											onClick={() => handleUpdate(category.id)}
-											disabled={isSubmitting}
-											className="p-1 text-green-400 hover:text-green-300 transition-colors"
-										>
-											<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-												<path d="M20 6 9 17l-5-5"/>
-											</svg>
-										</button>
-										<button onClick={() => setEditingId(null)} className="p-1 text-gray-400 hover:text-gray-300 transition-colors">
-											<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-												<path d="M18 6 6 18M6 6l12 12"/>
-											</svg>
-										</button>
-									</>
-								) : (
-									<>
-										<span className="flex-1">{category.name}</span>
-										<button
-											onClick={() => {
-												setEditingId(category.id);
-												setEditingName(category.name);
-											}}
-											className="p-1 text-blue-400 hover:text-blue-300 transition-colors"
-										>
-											<Edit2 size={14} />
-										</button>
-										<button
-											onClick={() => onDelete(category.id)}
-											className="p-1 text-red-400 hover:text-red-300 transition-colors"
-										>
-											<Trash2 size={14} />
-										</button>
-									</>
-								)}
+							<div key={category.id} className="flex flex-col gap-1 glass-container rounded p-2">
+								<div className="flex items-center gap-2">
+									{editingId === category.id ? (
+										<>
+											<input
+												type="text"
+												value={editingName}
+												onChange={e => { setEditingName(e.target.value); setEditError(''); }}
+												className="input-field flex-1"
+												autoFocus
+											/>
+											<button
+												onClick={() => handleUpdate(category.id)}
+												disabled={isSubmitting}
+												className="p-1 text-green-400 hover:text-green-300 transition-colors"
+											>
+												<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+													<path d="M20 6 9 17l-5-5"/>
+												</svg>
+											</button>
+											<button onClick={() => { setEditingId(null); setEditError(''); }} className="p-1 text-gray-400 hover:text-gray-300 transition-colors">
+												<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+													<path d="M18 6 6 18M6 6l12 12"/>
+												</svg>
+											</button>
+										</>
+									) : (
+										<>
+											<span className="flex-1">{category.name}</span>
+											<button
+												onClick={() => {
+													setEditingId(category.id);
+													setEditingName(category.name);
+													setEditError('');
+												}}
+												className="p-1 text-blue-400 hover:text-blue-300 transition-colors"
+											>
+												<Edit2 size={14} />
+											</button>
+											<button
+												onClick={() => onDelete(category.id)}
+												className="p-1 text-red-400 hover:text-red-300 transition-colors"
+											>
+												<Trash2 size={14} />
+											</button>
+										</>
+									)}
+								</div>
+								{editingId === category.id && editError && <p className="text-red-400 text-xs px-1">{editError}</p>}
 							</div>
 						))
 					)}
