@@ -437,7 +437,7 @@ export function LinkManager() {
 						<select
 							value={selectedCategory}
 							onChange={e => setSelectedCategory(e.target.value)}
-							className="input-field w-full md:w-64"
+							className="input-field category-select w-full md:w-64"
 						>
 							<option value="all">Todas las categorías</option>
 							{categories.map(cat => (
@@ -540,7 +540,7 @@ export function LinkManager() {
 									<p className="text-gray-400 text-sm">No hay links en esta categoría</p>
 								) : (
 									<SortableContext items={categoryLinks.map(l => l.id)} strategy={rectSortingStrategy}>
-										<div className={categoryViewModes[category.id] === 'list' ? 'flex flex-col gap-1' : 'grid grid-cols-3 md:grid-cols-5 gap-3'}>
+										<div className={categoryViewModes[category.id] === 'list' ? 'flex flex-col gap-1' : 'grid grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-3'}>
 											{categoryLinks.map(link => (
 												<LinkCard
 													key={link.id}

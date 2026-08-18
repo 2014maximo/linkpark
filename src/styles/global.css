@@ -80,6 +80,16 @@ body.theme-visualtext h6 {
 		background-color: rgba(0, 0, 0, 0.3);
 	}
 
+	.category-select option {
+		background-color: rgba(0, 0, 0, 0.5);
+		color: #ffffff;
+	}
+
+	body.theme-visualtext .category-select option {
+		background-color: rgba(0, 0, 0, 0.85);
+		color: #ffffff !important;
+	}
+
 	.title-shadow {
 		text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.9), 0 0 10px rgba(0, 0, 0, 0.5);
 	}
