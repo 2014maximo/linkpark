@@ -6,6 +6,7 @@ export interface Link {
 	order: number;
 	createdAt: number;
 	faviconUrl?: string;
+	description?: string;
 }
 
 export interface Category {

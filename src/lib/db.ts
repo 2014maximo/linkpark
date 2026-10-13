@@ -157,6 +157,17 @@ export async function setCategoryViewMode(categoryId: string, mode: 'icons' | 'l
 	await db.put('settings', { key: 'categoryViewModes', value: current });
 }
 
+export async function getLayoutMode(): Promise<'categories' | 'table'> {
+	const db = await getDB();
+	const result = await db.get('settings', 'layoutMode');
+	return result?.value ?? 'categories';
+}
+
+export async function setLayoutMode(mode: 'categories' | 'table'): Promise<void> {
+	const db = await getDB();
+	await db.put('settings', { key: 'layoutMode', value: mode });
+}
+
 export async function clearAllLinks(): Promise<void> {
 	const db = await getDB();
 	const tx = db.transaction('links', 'readwrite');

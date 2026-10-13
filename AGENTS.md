@@ -20,9 +20,9 @@ Start page personal para gestionar links favoritos organizados por categorías. 
 
 ### Object Stores
 
-- **links**: `{ id, url, name, categoryId, order, createdAt, faviconUrl? }`
+- **links**: `{ id, url, name, categoryId, order, createdAt, faviconUrl?, description? }`
 - **categories**: `{ id, name, order, createdAt }`
-- **settings**: `{ key, value }` — claves: `backgroundImage` (data URL), `template` (string)
+- **settings**: `{ key, value }` — claves: `backgroundImage` (data URL), `template` (string), `categoryViewModes` (iconos/lista por categoría), `layoutMode` (`categories` | `table`)
 
 ## Estructura del proyecto
 
@@ -31,6 +31,7 @@ src/
 ├── components/
 │   ├── LinkManager.tsx          # Componente raíz (estado global, import/export, DnD, settings)
 │   ├── LinkCard.tsx             # Card individual de link con favicon y DnD
+│   ├── LinkTable.tsx            # Vista de tabla a todo el ancho (solo desktop)
 │   ├── LinksManager.tsx         # Modal para gestionar links de una categoría (mobile)
 │   ├── CategoryManager.tsx      # Modal para crear/editar/eliminar categorías
 │   ├── SortableCategoryContainer.tsx  # Contenedor de categoría draggable + droppable
@@ -45,7 +46,7 @@ src/
 │   ├── db.ts                    # Operaciones IndexedDB (CRUD links, categories, settings)
 │   ├── importExport.ts          # parseLinksFile() y exportLinksToText()
 │   ├── favicon.ts               # getFaviconUrl() — genera URL de favicon desde dominio
-│   └── useIsMobile.ts           # Hook: detecta mobile via `pointer: coarse`
+│   └── useIsMobile.ts           # Hooks: useMediaQuery() y useIsMobile() (mobile via `pointer: coarse`)
 ├── pages/
 │   └── index.astro              # Página única (carga LinkManager con client:load)
 ├── styles/
@@ -59,10 +60,11 @@ src/
 - Organización de links por categorías con orden personalizado
 - Drag & drop de links (entre categorías y reordenar dentro)
 - Drag & drop de categorías (reordenar)
-- Búsqueda por nombre y URL
+- Búsqueda por nombre, URL y descripción
+- Vista de tabla (icono, nombre, categoría, descripción, URL, editar) a todo el ancho, solo en desktop
 - Filtrado por categoría
 - Favicons automáticos (DuckDuckGo) con fallback y persistencia
-- Importar links desde archivo `.txt` (formato: `URL | Nombre | Categoría | FaviconUrl?`)
+- Importar links desde archivo `.txt` (formato: `URL | Nombre | Categoría | FaviconUrl? | Descripción?`)
 - Exportar links a archivo `.txt` (ordenado por categoría y orden)
 - Resolución de duplicados al importar (skip / reemplazar / agregar de todos modos)
 - Compartir links vía Web Share API (mobile)
@@ -77,7 +79,10 @@ src/
 ```
 URL | Nombre | Categoría
 URL | Nombre | Categoría | FaviconUrl
+URL | Nombre | Categoría | FaviconUrl | Descripción
 ```
+
+Si hay descripción pero no favicon, el cuarto campo queda vacío (`URL | Nombre | Categoría |  | Descripción`).
 
 Categoría por defecto: "General" si no se especifica.
 

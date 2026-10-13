@@ -20,10 +20,13 @@ import {
 	setTemplate,
 	getCategoryViewMode,
 	setCategoryViewMode,
+	getLayoutMode,
+	setLayoutMode,
 } from '../lib/db';
 import { parseLinksFile, exportLinksToText } from '../lib/importExport';
-import { useIsMobile } from '../lib/useIsMobile';
+import { useIsMobile, useMediaQuery } from '../lib/useIsMobile';
 import { LinkCard } from './LinkCard';
+import { LinkTable } from './LinkTable';
 import { CategoryManager } from './CategoryManager';
 import { LinksManager } from './LinksManager';
 import { BackgroundPicker } from './BackgroundPicker';
@@ -31,7 +34,7 @@ import { SortableCategoryContainer } from './SortableCategoryContainer';
 import { DuplicateModal } from './DuplicateModal';
 import { ExportModal } from './ExportModal';
 import { TemplateModal } from './TemplateModal';
-import { Search, Upload, Download, FolderPlus, Image, Settings, Trash2, Share2, Palette, X } from 'lucide-react';
+import { Search, Upload, Download, FolderPlus, Image, Settings, Trash2, Share2, Palette, X, Table, LayoutGrid } from 'lucide-react';
 import { DndContext, closestCenter } from '@dnd-kit/core';
 import type { DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, rectSortingStrategy, arrayMove } from '@dnd-kit/sortable';
@@ -44,6 +47,8 @@ export function LinkManager() {
 	const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
 	const [isLinksManagerOpen, setIsLinksManagerOpen] = useState(false);
 	const [managingCategoryId, setManagingCategoryId] = useState<string | null>(null);
+	const [editingLinkId, setEditingLinkId] = useState<string | null>(null);
+	const [layoutMode, setLayoutModeState] = useState<'categories' | 'table'>('categories');
 	const [isBackgroundModalOpen, setIsBackgroundModalOpen] = useState(false);
 	const [isExportModalOpen, setIsExportModalOpen] = useState(false);
 	const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
@@ -64,6 +69,9 @@ export function LinkManager() {
 	} | null>(null);
 	const fileInputRef = useRef<HTMLInputElement>(null);
 	const isMobile = useIsMobile();
+	const isWideScreen = useMediaQuery('(min-width: 768px)');
+	const canUseTable = !isMobile && isWideScreen;
+	const showTable = canUseTable && layoutMode === 'table';
 
 	useEffect(() => {
 		loadData();
@@ -78,7 +86,14 @@ export function LinkManager() {
 		getCategoryViewMode().then(modes => {
 			setCategoryViewModes(modes);
 		});
+		getLayoutMode().then(setLayoutModeState);
 	}, []);
+
+	useEffect(() => {
+		const pageContainer = document.getElementById('page-container');
+		pageContainer?.classList.toggle('container', !showTable);
+		return () => pageContainer?.classList.add('container');
+	}, [showTable]);
 
 	function applyTemplate(template: string) {
 		document.body.classList.remove('theme-linkpark', 'theme-visualtext');
@@ -100,6 +115,12 @@ export function LinkManager() {
 		await setCategoryViewMode(categoryId, newMode);
 	}
 
+	async function handleToggleLayoutMode() {
+		const newMode = layoutMode === 'table' ? 'categories' : 'table';
+		setLayoutModeState(newMode);
+		await setLayoutMode(newMode);
+	}
+
 	async function loadData() {
 		const [linksData, categoriesData] = await Promise.all([getAllLinks(), getAllCategories()]);
 		setLinks(linksData);
@@ -109,7 +130,8 @@ export function LinkManager() {
 	const filteredLinks = links.filter(link => {
 		const matchesSearch =
 			link.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-			link.url.toLowerCase().includes(searchTerm.toLowerCase());
+			link.url.toLowerCase().includes(searchTerm.toLowerCase()) ||
+			(link.description ?? '').toLowerCase().includes(searchTerm.toLowerCase());
 		const matchesCategory = selectedCategory === 'all' || link.categoryId === selectedCategory;
 		return matchesSearch && matchesCategory;
 	});
@@ -119,16 +141,16 @@ export function LinkManager() {
 		links: filteredLinks.filter(link => link.categoryId === category.id),
 	}));
 
-	async function handleAddLink(url: string, name: string, categoryId: string) {
+	async function handleAddLink(url: string, name: string, categoryId: string, description?: string) {
 		const maxOrder = links.filter(l => l.categoryId === categoryId).reduce((max, l) => Math.max(max, l.order), -1);
-		await addLink({ url, name, categoryId, order: maxOrder + 1 });
+		await addLink({ url, name, categoryId, order: maxOrder + 1, description });
 		await loadData();
 	}
 
-	async function handleUpdateLink(id: string, url: string, name: string, categoryId: string, faviconUrl?: string) {
+	async function handleUpdateLink(id: string, url: string, name: string, categoryId: string, faviconUrl?: string, description?: string) {
 		const link = links.find(l => l.id === id);
 		if (link) {
-			await updateLink({ ...link, url, name, categoryId, faviconUrl });
+			await updateLink({ ...link, url, name, categoryId, faviconUrl, description });
 			await loadData();
 		}
 	}
@@ -248,10 +270,11 @@ export function LinkManager() {
 						name: linkData.name,
 						categoryId: category.id,
 						faviconUrl: linkData.faviconUrl,
+						description: linkData.description,
 					});
 					const idx = currentLinks.findIndex(l => l.id === conflict.id);
 					if (idx !== -1) {
-						currentLinks[idx] = { ...conflict, url: linkData.url, name: linkData.name, categoryId: category.id, faviconUrl: linkData.faviconUrl };
+						currentLinks[idx] = { ...conflict, url: linkData.url, name: linkData.name, categoryId: category.id, faviconUrl: linkData.faviconUrl, description: linkData.description };
 					}
 				} else {
 					const maxLinkOrder = currentLinks
@@ -263,6 +286,7 @@ export function LinkManager() {
 						categoryId: category.id,
 						order: maxLinkOrder + 1,
 						faviconUrl: linkData.faviconUrl,
+						description: linkData.description,
 					});
 					currentLinks.push(newLink);
 				}
@@ -276,6 +300,7 @@ export function LinkManager() {
 					categoryId: category.id,
 					order: maxLinkOrder + 1,
 					faviconUrl: linkData.faviconUrl,
+					description: linkData.description,
 				});
 				currentLinks.push(newLink);
 			}
@@ -318,6 +343,7 @@ export function LinkManager() {
 			await clearAllData();
 			const bgLayer = document.getElementById('bg-layer');
 			if (bgLayer) bgLayer.style.backgroundImage = '';
+			setLayoutModeState('categories');
 			setIsDeleteMenuOpen(false);
 			await loadData();
 		}
@@ -447,6 +473,12 @@ export function LinkManager() {
 							))}
 						</select>
 						<div className="flex gap-2 flex-wrap w-full">
+							{canUseTable && (
+								<button onClick={handleToggleLayoutMode} className="btn-secondary" title={layoutMode === 'table' ? 'Cambiar a vista de categorías' : 'Cambiar a vista de tabla'}>
+									{layoutMode === 'table' ? <LayoutGrid size={18} /> : <Table size={18} />}
+									<span>{layoutMode === 'table' ? 'Vista categorías' : 'Vista tabla'}</span>
+								</button>
+							)}
 							<button onClick={() => setIsBackgroundModalOpen(true)} className="btn-secondary">
 								<Image size={18} />
 								<span>Fondo</span>
@@ -525,6 +557,17 @@ export function LinkManager() {
 				</div>
 			)}
 
+			{showTable && categories.length > 0 && (
+				<LinkTable
+					links={filteredLinks}
+					categories={categories}
+					isVisualText={currentTemplate === 'visualtext'}
+					onEdit={link => { setManagingCategoryId(link.categoryId); setEditingLinkId(link.id); setIsLinksManagerOpen(true); }}
+					onFaviconLoaded={handleFaviconLoaded}
+				/>
+			)}
+
+			{!showTable && (
 			<DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
 				<SortableContext items={categories.filter(c => selectedCategory === 'all' || c.id === selectedCategory).map(c => c.id)} strategy={rectSortingStrategy}>
 					<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -558,6 +601,7 @@ export function LinkManager() {
 					</div>
 				</SortableContext>
 			</DndContext>
+			)}
 
 			{isCategoryModalOpen && (
 				<CategoryManager
@@ -573,12 +617,13 @@ export function LinkManager() {
 				<LinksManager
 					links={links.filter(l => l.categoryId === managingCategoryId)}
 					category={categories.find(c => c.id === managingCategoryId)!}
-					onClose={() => { setIsLinksManagerOpen(false); setManagingCategoryId(null); }}
-					onAdd={async (url, name) => {
-						await handleAddLink(url, name, managingCategoryId);
+					initialEditingId={editingLinkId}
+					onClose={() => { setIsLinksManagerOpen(false); setManagingCategoryId(null); setEditingLinkId(null); }}
+					onAdd={async (url, name, description) => {
+						await handleAddLink(url, name, managingCategoryId, description);
 					}}
-					onUpdate={async (id, url, name, faviconUrl) => {
-						await handleUpdateLink(id, url, name, managingCategoryId, faviconUrl);
+					onUpdate={async (id, url, name, faviconUrl, description) => {
+						await handleUpdateLink(id, url, name, managingCategoryId, faviconUrl, description);
 					}}
 					onDelete={handleDeleteLink}
 				/>

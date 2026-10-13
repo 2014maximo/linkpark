@@ -1,16 +1,20 @@
 import { useState, useEffect } from 'react';
 
-export function useIsMobile(): boolean {
-	const [isMobile, setIsMobile] = useState(false);
+export function useMediaQuery(query: string): boolean {
+	const [matches, setMatches] = useState(false);
 
 	useEffect(() => {
-		const mql = window.matchMedia('(pointer: coarse)');
-		setIsMobile(mql.matches);
+		const mql = window.matchMedia(query);
+		setMatches(mql.matches);
 
-		const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+		const handler = (e: MediaQueryListEvent) => setMatches(e.matches);
 		mql.addEventListener('change', handler);
 		return () => mql.removeEventListener('change', handler);
-	}, []);
+	}, [query]);
 
-	return isMobile;
+	return matches;
+}
+
+export function useIsMobile(): boolean {
+	return useMediaQuery('(pointer: coarse)');
 }

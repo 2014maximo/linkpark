@@ -6,24 +6,29 @@ interface LinksManagerProps {
 	links: Link[];
 	category: Category;
 	onClose: () => void;
-	onAdd: (url: string, name: string) => Promise<void>;
-	onUpdate: (id: string, url: string, name: string, faviconUrl?: string) => Promise<void>;
+	initialEditingId?: string | null;
+	onAdd: (url: string, name: string, description?: string) => Promise<void>;
+	onUpdate: (id: string, url: string, name: string, faviconUrl?: string, description?: string) => Promise<void>;
 	onDelete: (id: string) => Promise<void>;
 }
 
-export function LinksManager({ links, category, onClose, onAdd, onUpdate, onDelete }: LinksManagerProps) {
+export function LinksManager({ links, category, initialEditingId = null, onClose, onAdd, onUpdate, onDelete }: LinksManagerProps) {
 	const [newLinkUrl, setNewLinkUrl] = useState('');
 	const [newLinkName, setNewLinkName] = useState('');
-	const [editingId, setEditingId] = useState<string | null>(null);
-	const [editingUrl, setEditingUrl] = useState('');
-	const [editingName, setEditingName] = useState('');
-	const [editingFaviconUrl, setEditingFaviconUrl] = useState('');
+	const [newLinkDescription, setNewLinkDescription] = useState('');
+	const initialLink = links.find(l => l.id === initialEditingId);
+	const [editingId, setEditingId] = useState<string | null>(initialLink?.id ?? null);
+	const [editingUrl, setEditingUrl] = useState(initialLink?.url ?? '');
+	const [editingName, setEditingName] = useState(initialLink?.name ?? '');
+	const [editingFaviconUrl, setEditingFaviconUrl] = useState(initialLink?.faviconUrl ?? '');
+	const [editingDescription, setEditingDescription] = useState(initialLink?.description ?? '');
 	const [isSubmitting, setIsSubmitting] = useState(false);
 
 	useEffect(() => {
 		if (editingId === null) {
 			setNewLinkUrl('');
 			setNewLinkName('');
+			setNewLinkDescription('');
 		}
 	}, [editingId]);
 
@@ -33,9 +38,10 @@ export function LinksManager({ links, category, onClose, onAdd, onUpdate, onDele
 
 		setIsSubmitting(true);
 		try {
-			await onAdd(newLinkUrl.trim(), newLinkName.trim());
+			await onAdd(newLinkUrl.trim(), newLinkName.trim(), newLinkDescription.trim() || undefined);
 			setNewLinkUrl('');
 			setNewLinkName('');
+			setNewLinkDescription('');
 		} finally {
 			setIsSubmitting(false);
 		}
@@ -46,11 +52,12 @@ export function LinksManager({ links, category, onClose, onAdd, onUpdate, onDele
 
 		setIsSubmitting(true);
 		try {
-			await onUpdate(id, editingUrl.trim(), editingName.trim(), editingFaviconUrl.trim() || undefined);
+			await onUpdate(id, editingUrl.trim(), editingName.trim(), editingFaviconUrl.trim() || undefined, editingDescription.trim() || undefined);
 			setEditingId(null);
 			setEditingUrl('');
 			setEditingName('');
 			setEditingFaviconUrl('');
+			setEditingDescription('');
 		} finally {
 			setIsSubmitting(false);
 		}
@@ -83,6 +90,13 @@ export function LinksManager({ links, category, onClose, onAdd, onUpdate, onDele
 						className="input-field flex-1 min-w-0"
 						required
 					/>
+					<input
+						type="text"
+						value={newLinkDescription}
+						onChange={e => setNewLinkDescription(e.target.value)}
+						placeholder="Descripción (opcional)"
+						className="input-field flex-1 min-w-0"
+					/>
 					<button type="submit" disabled={isSubmitting} className="btn-primary disabled:opacity-50">
 						<Plus size={18} />
 					</button>
@@ -96,28 +110,37 @@ export function LinksManager({ links, category, onClose, onAdd, onUpdate, onDele
 							<div key={link.id} className="flex flex-col sm:flex-row sm:items-center gap-2 glass-container rounded p-2">
 								{editingId === link.id ? (
 									<>
-										<input
-											type="url"
-											value={editingUrl}
-											onChange={e => setEditingUrl(e.target.value)}
-											className="input-field flex-1 min-w-0"
-											placeholder="URL"
-											autoFocus
-										/>
-										<input
-											type="text"
-											value={editingName}
-											onChange={e => setEditingName(e.target.value)}
-											className="input-field flex-1 min-w-0"
-											placeholder="Nombre"
-										/>
-										<input
-											type="url"
-											value={editingFaviconUrl}
-											onChange={e => setEditingFaviconUrl(e.target.value)}
-											className="input-field flex-1 min-w-0"
-											placeholder="URL del favicon (opcional)"
-										/>
+										<div className="grid grid-cols-1 sm:grid-cols-2 gap-2 flex-1 min-w-0">
+											<input
+												type="url"
+												value={editingUrl}
+												onChange={e => setEditingUrl(e.target.value)}
+												className="input-field min-w-0"
+												placeholder="URL"
+												autoFocus
+											/>
+											<input
+												type="text"
+												value={editingName}
+												onChange={e => setEditingName(e.target.value)}
+												className="input-field min-w-0"
+												placeholder="Nombre"
+											/>
+											<input
+												type="url"
+												value={editingFaviconUrl}
+												onChange={e => setEditingFaviconUrl(e.target.value)}
+												className="input-field min-w-0"
+												placeholder="URL del favicon (opcional)"
+											/>
+											<input
+												type="text"
+												value={editingDescription}
+												onChange={e => setEditingDescription(e.target.value)}
+												className="input-field min-w-0"
+												placeholder="Descripción (opcional)"
+											/>
+										</div>
 										<div className="flex gap-1">
 											<button
 												onClick={() => handleUpdate(link.id)}
@@ -140,6 +163,7 @@ export function LinksManager({ links, category, onClose, onAdd, onUpdate, onDele
 										<div className="flex-1 min-w-0">
 											<div className="font-medium truncate">{link.name}</div>
 											<div className="text-xs text-gray-400 truncate">{link.url}</div>
+											{link.description && <div className="text-xs text-gray-400 truncate">{link.description}</div>}
 										</div>
 										<button
 											onClick={() => {
@@ -147,6 +171,7 @@ export function LinksManager({ links, category, onClose, onAdd, onUpdate, onDele
 												setEditingUrl(link.url);
 												setEditingName(link.name);
 												setEditingFaviconUrl(link.faviconUrl || '');
+												setEditingDescription(link.description || '');
 											}}
 											className="p-1 text-blue-400 hover:text-blue-300 transition-colors"
 										>

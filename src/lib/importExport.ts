@@ -1,8 +1,8 @@
 import type { Link, Category } from '../types';
 
-export function parseLinksFile(content: string): Array<{ url: string; name: string; category: string; faviconUrl?: string }> {
+export function parseLinksFile(content: string): Array<{ url: string; name: string; category: string; faviconUrl?: string; description?: string }> {
 	const lines = content.split('\n').filter(line => line.trim());
-	const result: Array<{ url: string; name: string; category: string; faviconUrl?: string }> = [];
+	const result: Array<{ url: string; name: string; category: string; faviconUrl?: string; description?: string }> = [];
 
 	for (const line of lines) {
 		const parts = line.split('|').map(p => p.trim());
@@ -11,8 +11,9 @@ export function parseLinksFile(content: string): Array<{ url: string; name: stri
 			const name = parts[1];
 			const category = parts[2] || 'General';
 			const faviconUrl = parts.length >= 4 && parts[3] ? parts[3] : undefined;
+			const description = parts.slice(4).join(' | ') || undefined;
 			if (url && name) {
-				result.push({ url, name, category, faviconUrl });
+				result.push({ url, name, category, faviconUrl, description });
 			}
 		}
 	}
@@ -32,7 +33,10 @@ export function exportLinksToText(links: Link[], categories: Category[]): string
 		if (categoryLinks.length === 0) continue;
 
 		for (const link of categoryLinks) {
-			if (link.faviconUrl) {
+			const description = link.description?.replace(/\s*\n\s*/g, ' ').trim();
+			if (description) {
+				lines.push(`${link.url} | ${link.name} | ${category.name} | ${link.faviconUrl ?? ''} | ${description}`);
+			} else if (link.faviconUrl) {
 				lines.push(`${link.url} | ${link.name} | ${category.name} | ${link.faviconUrl}`);
 			} else {
 				lines.push(`${link.url} | ${link.name} | ${category.name}`);
